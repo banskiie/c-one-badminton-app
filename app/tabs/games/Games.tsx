@@ -111,7 +111,7 @@ export default ({ navigation }: any) => {
                   subtitle={
                     <View style={styles.subtitle}>
                       <Text>{`${moment(item.time.slot.toDate()).format(
-                        "h:mA"
+                        "hh:mmA"
                       )} | ${item.details.game_no}`}</Text>
                       <Text
                         style={{
