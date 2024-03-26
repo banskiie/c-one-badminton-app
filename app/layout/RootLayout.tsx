@@ -9,16 +9,11 @@ import HomeLayout from "./HomeLayout"
 import { useAuthStore } from "../store/store"
 // Screen Orientation
 import * as ScreenOrientation from "expo-screen-orientation"
-import { useFonts } from "expo-font"
-import Loading from "../components/Loading"
 
 const Stack = createNativeStackNavigator()
 
 export default () => {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn)
-  const [fontsLoaded, fontError] = useFonts({
-    Inter: require("../../assets/fonts/Inter.ttf"),
-  })
 
   useEffect(() => {
     ScreenOrientation.unlockAsync()
@@ -26,27 +21,23 @@ export default () => {
 
   return (
     <>
-      {fontsLoaded ? (
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="App">
-            {isLoggedIn ? (
-              <Stack.Screen
-                name="App"
-                component={HomeLayout}
-                options={{ headerShown: false }}
-              />
-            ) : (
-              <Stack.Screen
-                name="App"
-                component={Login}
-                options={{ headerShown: false }}
-              />
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
-      ) : (
-        <Loading />
-      )}
+      <NavigationContainer>
+        <Stack.Navigator initialRouteName="App">
+          {isLoggedIn ? (
+            <Stack.Screen
+              name="App"
+              component={HomeLayout}
+              options={{ headerShown: false }}
+            />
+          ) : (
+            <Stack.Screen
+              name="App"
+              component={Login}
+              options={{ headerShown: false }}
+            />
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
     </>
   )
 }

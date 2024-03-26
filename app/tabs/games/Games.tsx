@@ -4,6 +4,9 @@ import {
   where,
   orderBy,
   onSnapshot,
+  doc,
+  getDocs,
+  runTransaction,
 } from "firebase/firestore"
 import { useEffect, useRef, useState } from "react"
 import { StyleSheet, View, Animated } from "react-native"
@@ -48,11 +51,12 @@ export default ({ navigation }: any) => {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const ref = collection(FIRESTORE_DB, "games_test")
+        const ref = collection(FIRESTORE_DB, "games")
         const q = currentCourt
           ? query(
               ref,
               where("details.court", "==", currentCourt),
+              orderBy("statuses.current", "asc"),
               orderBy("time.slot", "asc")
             )
           : query(ref, orderBy("created_date", "asc"))
@@ -82,12 +86,47 @@ export default ({ navigation }: any) => {
     switch (status) {
       case "upcoming":
         return "slategray"
-      case "on going":
+      case "current":
         return "red"
       case "finished":
-        return "green"
+        return "blue"
       default:
         return theme.colors.primary
+    }
+  }
+
+  const handleScoreboard = async (data: any) => {
+    try {
+      await runTransaction(FIRESTORE_DB, async (transaction) => {
+        const { id } = data
+        const snap = await transaction.get(doc(FIRESTORE_DB, "games", id))
+        const game = snap.data()
+        // Game Update
+        transaction.update(doc(FIRESTORE_DB, "games", id), {
+          ...data,
+          statuses: {
+            ...data.statuses,
+            active: !game?.statuses.active,
+          },
+        })
+        // Court Update
+        const courtName = game?.details.court
+        const courtQuery = query(
+          collection(FIRESTORE_DB, "courts"),
+          where("court_name", "==", courtName)
+        )
+        const courtSnapshot = await getDocs(courtQuery)
+        if (!courtSnapshot.empty) {
+          transaction.update(
+            doc(FIRESTORE_DB, "courts", courtSnapshot.docs[0].id),
+            {
+              court_in_use: !game?.statuses.active,
+            }
+          )
+        }
+      })
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -129,20 +168,41 @@ export default ({ navigation }: any) => {
                 />
                 <Card.Content>
                   <View style={styles.content}>
-                    <Text style={{ ...styles.team_name, textAlign: "left" }}>
-                      {item.players.team_a.team_name}
-                    </Text>
-                    <Text style={styles.set_number}>
-                      Set {item.details.playing_set}
-                    </Text>
-                    <Text
+                    <View
                       style={{
                         ...styles.team_name,
-                        textAlign: "right",
+                        justifyContent: "flex-start",
                       }}
                     >
-                      {item.players.team_b.team_name}
+                      <Text style={{ textAlign: "left" }}>
+                        {item.players.team_a.team_name}{" "}
+                      </Text>
+                      {item.details.game_winner === "a" && (
+                        <Text style={styles.winner}>Winner</Text>
+                      )}
+                    </View>
+                    <Text style={styles.set_number}>
+                      {item.statuses.current == "finished"
+                        ? `Best of ${item.details.no_of_sets}`
+                        : `Set ${item.details.playing_set}`}
                     </Text>
+                    <View
+                      style={{
+                        ...styles.team_name,
+                        justifyContent: "flex-end",
+                      }}
+                    >
+                      {item.details.game_winner === "b" && (
+                        <Text style={styles.winner}>Winner</Text>
+                      )}
+                      <Text
+                        style={{
+                          textAlign: "right",
+                        }}
+                      >
+                        {item.players.team_b.team_name}
+                      </Text>
+                    </View>
                   </View>
                   <View style={styles.scoreboard}>
                     <View
@@ -152,7 +212,16 @@ export default ({ navigation }: any) => {
                       }}
                     >
                       <View style={styles.scoreboard}>
-                        <Text variant="titleMedium" style={styles.team_a}>
+                        <Text
+                          variant="titleMedium"
+                          style={{
+                            ...styles.team_a,
+                            fontWeight:
+                              item.details.game_winner === "a"
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
                           {item.players.team_a.player_1.first_name[0]}.{" "}
                           {item.players.team_a.player_1.last_name}{" "}
                         </Text>
@@ -161,7 +230,13 @@ export default ({ navigation }: any) => {
                         <View style={styles.scoreboard}>
                           <Text
                             variant="titleMedium"
-                            style={{ textAlign: "left", fontWeight: "bold" }}
+                            style={{
+                              ...styles.team_a,
+                              fontWeight:
+                                item.details.game_winner === "a"
+                                  ? "bold"
+                                  : "normal",
+                            }}
                           >
                             {item.players.team_a.player_2.first_name[0]}.{" "}
                             {item.players.team_a.player_2.last_name}{" "}
@@ -176,7 +251,12 @@ export default ({ navigation }: any) => {
                         }}
                       >
                         <Text variant="displayMedium" style={styles.score}>
-                          {item.sets[`set_${item.details.playing_set}`].a_score}
+                          {item.statuses.current == "finished"
+                            ? Object.values(item.sets).filter(
+                                (set: any) => set.winner === "a"
+                              ).length
+                            : item.sets[`set_${item.details.playing_set}`]
+                                .a_score}
                         </Text>
                       </View>
                       <View
@@ -195,7 +275,12 @@ export default ({ navigation }: any) => {
                         }}
                       >
                         <Text variant="displayMedium" style={styles.score}>
-                          {item.sets[`set_${item.details.playing_set}`].b_score}
+                          {item.statuses.current == "finished"
+                            ? Object.values(item.sets).filter(
+                                (set: any) => set.winner === "b"
+                              ).length
+                            : item.sets[`set_${item.details.playing_set}`]
+                                .b_score}
                         </Text>
                       </View>
                     </View>
@@ -206,7 +291,16 @@ export default ({ navigation }: any) => {
                           justifyContent: "flex-end",
                         }}
                       >
-                        <Text variant="titleMedium" style={styles.team_b}>
+                        <Text
+                          variant="titleMedium"
+                          style={{
+                            ...styles.team_b,
+                            fontWeight:
+                              item.details.game_winner === "b"
+                                ? "bold"
+                                : "normal",
+                          }}
+                        >
                           {" "}
                           {item.players.team_b.player_1.first_name[0]}.{" "}
                           {item.players.team_b.player_1.last_name}
@@ -219,7 +313,16 @@ export default ({ navigation }: any) => {
                             justifyContent: "flex-end",
                           }}
                         >
-                          <Text variant="titleMedium" style={styles.team_b}>
+                          <Text
+                            variant="titleMedium"
+                            style={{
+                              ...styles.team_b,
+                              fontWeight:
+                                item.details.game_winner === "b"
+                                  ? "bold"
+                                  : "normal",
+                            }}
+                          >
                             {" "}
                             {item.players.team_b.player_2.first_name[0]}.{" "}
                             {item.players.team_b.player_2.last_name}
@@ -237,14 +340,24 @@ export default ({ navigation }: any) => {
                   ) && (
                     <IconButton
                       icon="badminton"
-                      mode="contained"
-                      containerColor={theme.colors.secondary}
+                      mode="outlined"
                       size={14}
                       onPress={() =>
                         navigation.navigate("Score Game", { ...item })
                       }
                     />
                   )}
+                  <IconButton
+                    icon="scoreboard"
+                    mode="outlined"
+                    containerColor={
+                      item.statuses.active
+                        ? theme.colors.secondary
+                        : "transparent"
+                    }
+                    size={14}
+                    onPress={() => handleScoreboard(item)}
+                  />
                 </Card.Actions>
               </Card>
             )}
@@ -305,7 +418,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "gray",
   },
-  team_name: { width: "40%", color: "gray" },
   scoreboard: {
     width: "100%",
     display: "flex",
@@ -321,6 +433,24 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
   },
-  team_a: { textAlign: "left", fontWeight: "bold" },
-  team_b: { textAlign: "right", fontWeight: "bold" },
+  team_name: {
+    width: "40%",
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  winner: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    color: "white",
+    textTransform: "uppercase",
+    borderRadius: 12,
+    fontSize: 9,
+    fontWeight: "bold",
+    alignContent: "center",
+    backgroundColor: "green",
+  },
+  team_a: { textAlign: "left" },
+  team_b: { textAlign: "right" },
 })
