@@ -26,7 +26,7 @@ export default () => {
     <Tab.Navigator
       screenOptions={{
         headerTitleAlign: "center",
-        tabBarStyle: { height: 60 },
+        tabBarStyle: { height: 40 },
         tabBarShowLabel: false,
         tabBarActiveTintColor: theme.colors.primary,
         headerShown: false,

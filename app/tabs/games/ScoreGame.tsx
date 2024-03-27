@@ -309,203 +309,190 @@ const Score = ({ route, navigation }) => {
     }
   }
 
+  const reset = async () => {
+    setChangingSet(true)
+    try {
+      await updateDoc(gameRef, {
+        sets: {
+          ...data.sets,
+          [`set_${data.details.playing_set}`]: {
+            a_score: 0,
+            b_score: 0,
+            current_round: 1,
+            last_team_scored: "",
+            scoresheet: [],
+            shuttles_used: 0,
+            winner: "",
+          },
+        },
+      })
+    } catch (error: any) {
+      console.error(error)
+    } finally {
+      setChangingSet(false)
+    }
+  }
+
   if (changingSet) {
     return <Loading />
   }
 
   return (
-    <ScrollView>
+    <>
       {!!data?.time.start ? (
-        <View style={{ padding: 15, flex: 1, gap: 8 }}>
-          {data?.details.no_of_sets > 1 && (
-            <Dropdown
-              style={styles.dropdown}
-              selectedTextStyle={{ textAlign: "center" }}
-              placeholderStyle={{ textAlign: "center" }}
-              data={Array.from({ length: data?.details.no_of_sets }).map(
-                (_, index) => ({
+        <ScrollView>
+          <View style={{ flex: 1, padding: 12, gap: 8 }}>
+            {data?.details.no_of_sets > 1 && (
+              <Dropdown
+                style={styles.dropdown}
+                selectedTextStyle={{ textAlign: "center" }}
+                placeholderStyle={{ textAlign: "center" }}
+                data={Array.from({
+                  length:
+                    Object.values(data?.sets).filter(
+                      (set: any) => set.winner !== ""
+                    ).length == 2 &&
+                    !!(
+                      Object.values(data.sets).filter(
+                        (set: any) => set.winner === "a"
+                      ).length >= 2 ||
+                      Object.values(data.sets).filter(
+                        (set: any) => set.winner === "b"
+                      ).length >= 2
+                    )
+                      ? 2
+                      : Object.values(data?.sets).filter(
+                          (set: any) => set.winner !== ""
+                        ).length + 1,
+                }).map((_, index) => ({
                   label: `SET ${index + 1}`,
                   value: index + 1,
-                })
-              )}
-              value={!changingSet ? data.details.playing_set : ""}
-              mode="default"
-              labelField="label"
-              valueField="value"
-              placeholder="Select Set"
-              onChange={(item: any) => changeSet(item.value)}
-            />
-          )}
-          {!!(
-            data?.details.no_of_sets === 1 &&
-            !!(
-              data.sets[`set_${data.details.playing_set}`].a_score >=
-                data.details.max_score ||
-              data.sets[`set_${data.details.playing_set}`].b_score >=
-                data.details.max_score
-            )
-          ) ||
-            (!!(
-              data?.details.no_of_sets === 3 &&
+                }))}
+                value={!changingSet ? data.details.playing_set : ""}
+                mode="default"
+                labelField="label"
+                valueField="value"
+                placeholder="Select Set"
+                onChange={(item: any) => changeSet(item.value)}
+              />
+            )}
+            {!!(
+              data?.details.no_of_sets === 1 &&
               !!(
-                Object.values(data.sets).filter(
-                  (set: any) => set.winner === "a"
-                ).length >= 2 ||
-                Object.values(data.sets).filter(
-                  (set: any) => set.winner === "b"
-                ).length >= 2
+                data.sets[`set_${data.details.playing_set}`].a_score >=
+                  data.details.max_score ||
+                data.sets[`set_${data.details.playing_set}`].b_score >=
+                  data.details.max_score
               )
-            ) && (
-              <Button mode="contained" onPress={finish}>
-                Finish
-              </Button>
-            ))}
-          {!!(!!data?.time.start && !data?.time.end) && (
-            <Timer start={data?.time.start} />
-          )}
-          {/* Team Name and Score */}
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
+            ) ||
+              (!!(
+                data?.details.no_of_sets === 3 &&
+                !!(
+                  Object.values(data.sets).filter(
+                    (set: any) => set.winner === "a"
+                  ).length >= 2 ||
+                  Object.values(data.sets).filter(
+                    (set: any) => set.winner === "b"
+                  ).length >= 2
+                )
+              ) && (
+                <Button mode="contained" onPress={finish}>
+                  Finish
+                </Button>
+              ))}
+            {!!(!!data?.time.start && !data?.time.end) && (
+              <Timer start={data?.time.start} />
+            )}
+            {/* Team Name and Score */}
             <View
               style={{
-                backgroundColor: "#FAC898",
-                width: "49.5%",
                 display: "flex",
-                alignItems: "center",
-                borderRadius: 8,
-              }}
-            >
-              {data.sets[`set_${data.details.playing_set}`].a_score >=
-                data.details.max_score && (
-                <Text
-                  style={{
-                    fontWeight: "bold",
-                    textTransform: "uppercase",
-                    position: "absolute",
-                    marginTop: -24,
-                  }}
-                >
-                  Winner ♛
-                </Text>
-              )}
-              <Text>
-                {!!data.players.team_a.team_name
-                  ? data.players.team_a.team_name
-                  : "Team A"}{" "}
-              </Text>
-              <Text variant="displayLarge">
-                {data.sets[`set_${data.details.playing_set}`].a_score}
-              </Text>
-            </View>
-            <View
-              style={{
-                backgroundColor: "#ddf6dd",
-                width: "49.5%",
-                display: "flex",
-                alignItems: "center",
-                borderRadius: 8,
-              }}
-            >
-              {data.sets[`set_${data.details.playing_set}`].b_score >=
-                data.details.max_score && (
-                <Text
-                  style={{
-                    fontWeight: "bold",
-                    textTransform: "uppercase",
-                    position: "absolute",
-                    marginTop: -24,
-                  }}
-                >
-                  Winner ♛
-                </Text>
-              )}
-              <Text>
-                {!!data.players.team_b.team_name
-                  ? data.players.team_b.team_name
-                  : "Team B"}{" "}
-              </Text>
-              <Text variant="displayLarge">
-                {data.sets[`set_${data.details.playing_set}`].b_score}
-              </Text>
-            </View>
-          </View>
-          {/* Players */}
-          <View
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-between",
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: "#FAC898",
-                width: "49.5%",
-                display: "flex",
-                justifyContent: "center",
-                paddingRight: 8,
-                borderRadius: 8,
-                height: 120,
+                flexDirection: "row",
+                justifyContent: "space-between",
               }}
             >
               <View
                 style={{
+                  backgroundColor: "#FAC898",
+                  width: "49.5%",
                   display: "flex",
-                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "space-between",
+                  borderRadius: 8,
                 }}
               >
-                <View
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <IconButton
-                    icon="plus"
-                    size={18}
-                    mode="contained-tonal"
-                    containerColor="#ddf6dd"
-                    onPress={() => score("a1")}
-                    loading={loading}
-                    disabled={
-                      loading ||
-                      !!(
-                        data.sets[`set_${data.details.playing_set}`].a_score >=
-                          data.details.max_score ||
-                        data.sets[`set_${data.details.playing_set}`].b_score >=
-                          data.details.max_score
-                      )
-                    }
-                  />
+                {data.sets[`set_${data.details.playing_set}`].a_score >=
+                  data.details.max_score && (
                   <Text
                     style={{
-                      fontSize: 30,
                       fontWeight: "bold",
+                      textTransform: "uppercase",
+                      position: "absolute",
+                      marginTop: -24,
                     }}
                   >
-                    {data?.players.team_a.player_1.first_name +
-                      " " +
-                      data?.players.team_a.player_1.last_name}
+                    Winner ♛
                   </Text>
-                </View>
-                <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                  {
-                    data?.sets[
-                      `set_${data.details.playing_set}`
-                    ].scoresheet.filter((round: any) => round?.scorer === "a1")
-                      .length
-                  }
+                )}
+                <Text>
+                  {!!data.players.team_a.team_name
+                    ? data.players.team_a.team_name
+                    : "Team A"}{" "}
+                </Text>
+                <Text variant="displayLarge">
+                  {data.sets[`set_${data.details.playing_set}`].a_score}
                 </Text>
               </View>
-              {hasPlayer2 && (
+              <View
+                style={{
+                  backgroundColor: "#ddf6dd",
+                  width: "49.5%",
+                  display: "flex",
+                  alignItems: "center",
+                  borderRadius: 8,
+                }}
+              >
+                {data.sets[`set_${data.details.playing_set}`].b_score >=
+                  data.details.max_score && (
+                  <Text
+                    style={{
+                      fontWeight: "bold",
+                      textTransform: "uppercase",
+                      position: "absolute",
+                      marginTop: -24,
+                    }}
+                  >
+                    Winner ♛
+                  </Text>
+                )}
+                <Text>
+                  {!!data.players.team_b.team_name
+                    ? data.players.team_b.team_name
+                    : "Team B"}{" "}
+                </Text>
+                <Text variant="displayLarge">
+                  {data.sets[`set_${data.details.playing_set}`].b_score}
+                </Text>
+              </View>
+            </View>
+            {/* Players */}
+            <View
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <View
+                style={{
+                  backgroundColor: "#FAC898",
+                  width: "49.5%",
+                  display: "flex",
+                  justifyContent: "center",
+                  paddingRight: 8,
+                  borderRadius: 8,
+                  height: 120,
+                }}
+              >
                 <View
                   style={{
                     display: "flex",
@@ -526,7 +513,7 @@ const Score = ({ route, navigation }) => {
                       size={18}
                       mode="contained-tonal"
                       containerColor="#ddf6dd"
-                      onPress={() => score("a2")}
+                      onPress={() => score("a1")}
                       loading={loading}
                       disabled={
                         loading ||
@@ -538,10 +525,15 @@ const Score = ({ route, navigation }) => {
                         )
                       }
                     />
-                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                      {data?.players.team_a.player_2.first_name +
+                    <Text
+                      style={{
+                        fontSize: 30,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {data?.players.team_a.player_1.first_name +
                         " " +
-                        data?.players.team_a.player_2.last_name}
+                        data?.players.team_a.player_1.last_name}
                     </Text>
                   </View>
                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
@@ -549,72 +541,73 @@ const Score = ({ route, navigation }) => {
                       data?.sets[
                         `set_${data.details.playing_set}`
                       ].scoresheet.filter(
-                        (round: any) => round?.scorer === "a2"
+                        (round: any) => round?.scorer === "a1"
                       ).length
                     }
                   </Text>
                 </View>
-              )}
-            </View>
-            <View
-              style={{
-                backgroundColor: "#ddf6dd",
-                width: "49.5%",
-                display: "flex",
-                justifyContent: "center",
-                paddingRight: 8,
-                borderRadius: 8,
-                height: 120,
-              }}
-            >
+                {hasPlayer2 && (
+                  <View
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <IconButton
+                        icon="plus"
+                        size={18}
+                        mode="contained-tonal"
+                        containerColor="#ddf6dd"
+                        onPress={() => score("a2")}
+                        loading={loading}
+                        disabled={
+                          loading ||
+                          !!(
+                            data.sets[`set_${data.details.playing_set}`]
+                              .a_score >= data.details.max_score ||
+                            data.sets[`set_${data.details.playing_set}`]
+                              .b_score >= data.details.max_score
+                          )
+                        }
+                      />
+                      <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+                        {data?.players.team_a.player_2.first_name +
+                          " " +
+                          data?.players.team_a.player_2.last_name}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+                      {
+                        data?.sets[
+                          `set_${data.details.playing_set}`
+                        ].scoresheet.filter(
+                          (round: any) => round?.scorer === "a2"
+                        ).length
+                      }
+                    </Text>
+                  </View>
+                )}
+              </View>
               <View
                 style={{
+                  backgroundColor: "#ddf6dd",
+                  width: "49.5%",
                   display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  justifyContent: "center",
+                  paddingRight: 8,
+                  borderRadius: 8,
+                  height: 120,
                 }}
               >
-                <View
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
-                >
-                  <IconButton
-                    icon="plus"
-                    size={18}
-                    mode="contained-tonal"
-                    containerColor="#FAC898"
-                    onPress={() => score("b1")}
-                    loading={loading}
-                    disabled={
-                      loading ||
-                      !!(
-                        data.sets[`set_${data.details.playing_set}`].a_score >=
-                          data.details.max_score ||
-                        data.sets[`set_${data.details.playing_set}`].b_score >=
-                          data.details.max_score
-                      )
-                    }
-                  />
-                  <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                    {data?.players.team_b.player_1.first_name +
-                      " " +
-                      data?.players.team_b.player_1.last_name}
-                  </Text>
-                </View>
-                <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                  {
-                    data?.sets[
-                      `set_${data.details.playing_set}`
-                    ].scoresheet.filter((round: any) => round?.scorer === "b1")
-                      .length
-                  }
-                </Text>
-              </View>
-              {hasPlayer2 && (
                 <View
                   style={{
                     display: "flex",
@@ -635,7 +628,7 @@ const Score = ({ route, navigation }) => {
                       size={18}
                       mode="contained-tonal"
                       containerColor="#FAC898"
-                      onPress={() => score("b2")}
+                      onPress={() => score("b1")}
                       loading={loading}
                       disabled={
                         loading ||
@@ -648,9 +641,9 @@ const Score = ({ route, navigation }) => {
                       }
                     />
                     <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                      {data?.players.team_b.player_2.first_name +
+                      {data?.players.team_b.player_1.first_name +
                         " " +
-                        data?.players.team_b.player_2.last_name}
+                        data?.players.team_b.player_1.last_name}
                     </Text>
                   </View>
                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
@@ -658,56 +651,128 @@ const Score = ({ route, navigation }) => {
                       data?.sets[
                         `set_${data.details.playing_set}`
                       ].scoresheet.filter(
-                        (round: any) => round?.scorer === "b2"
+                        (round: any) => round?.scorer === "b1"
                       ).length
                     }
                   </Text>
                 </View>
+                {hasPlayer2 && (
+                  <View
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <IconButton
+                        icon="plus"
+                        size={18}
+                        mode="contained-tonal"
+                        containerColor="#FAC898"
+                        onPress={() => score("b2")}
+                        loading={loading}
+                        disabled={
+                          loading ||
+                          !!(
+                            data.sets[`set_${data.details.playing_set}`]
+                              .a_score >= data.details.max_score ||
+                            data.sets[`set_${data.details.playing_set}`]
+                              .b_score >= data.details.max_score
+                          )
+                        }
+                      />
+                      <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+                        {data?.players.team_b.player_2.first_name +
+                          " " +
+                          data?.players.team_b.player_2.last_name}
+                      </Text>
+                    </View>
+                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+                      {
+                        data?.sets[
+                          `set_${data.details.playing_set}`
+                        ].scoresheet.filter(
+                          (round: any) => round?.scorer === "b2"
+                        ).length
+                      }
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            {/* Action Buttons */}
+            <View
+              style={{
+                width: "100%",
+                flex: 1,
+                flexDirection: "row",
+                justifyContent: "space-evenly",
+              }}
+            >
+              <Button
+                loading={loading}
+                style={{
+                  width:
+                    data.sets[`set_${data.details.playing_set}`].scoresheet
+                      .length > 0
+                      ? "30%"
+                      : "80%",
+                }}
+                mode="contained"
+                onPress={handleScoreboard}
+                buttonColor={data?.statuses.active ? "#506A88" : "#789FCC"}
+                disabled={loading}
+              >
+                {data?.statuses.active ? "Hide" : "Show"} Scoreboard
+              </Button>
+              {data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
+                0 && (
+                <>
+                  <Button
+                    loading={loading}
+                    buttonColor="#F7CAC9"
+                    style={{ width: "30%" }}
+                    mode="contained"
+                    icon="undo-variant"
+                    textColor="red"
+                    onPress={undo}
+                    disabled={loading}
+                  >
+                    Undo Score
+                  </Button>
+                  <Button
+                    style={{ width: "30%" }}
+                    loading={loading}
+                    mode="contained"
+                    onPress={reset}
+                    disabled={loading}
+                    textColor="black"
+                    icon="restore-alert"
+                    buttonColor="skyblue"
+                  >
+                    Reset
+                  </Button>
+                </>
               )}
             </View>
           </View>
-          {/* Action Buttons */}
-          <View
-            style={{
-              width: "100%",
-              flex: 1,
-              flexDirection: "row",
-              justifyContent: "space-evenly",
-            }}
-          >
-            <Button
-              loading={loading}
-              style={{ width: "45%" }}
-              mode="contained"
-              onPress={handleScoreboard}
-              buttonColor={data?.statuses.active ? "#506A88" : "#789FCC"}
-              disabled={loading}
-            >
-              {data?.statuses.active ? "Hide" : "Show"} Scoreboard
-            </Button>
-            {data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
-              0 && (
-              <Button
-                loading={loading}
-                buttonColor="#F7CAC9"
-                style={{ width: "45%" }}
-                mode="contained"
-                icon="undo-variant"
-                textColor="red"
-                onPress={undo}
-                disabled={loading}
-              >
-                Undo Score
-              </Button>
-            )}
-          </View>
-        </View>
+        </ScrollView>
       ) : (
-        <Button mode="contained" onPress={start}>
-          Start
-        </Button>
+        <View>
+          <Button mode="contained" onPress={start}>
+            Start
+          </Button>
+        </View>
       )}
-    </ScrollView>
+    </>
   )
 }
 
@@ -1187,8 +1252,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     width: "100%",
     backgroundColor: "#E6E6E6",
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
   },
   scoresheet: { display: "flex", flexDirection: "row", width: "100%" },
   box: {
