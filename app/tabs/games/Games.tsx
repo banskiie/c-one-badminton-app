@@ -144,14 +144,19 @@ export default ({ navigation }: any) => {
             renderItem={({ item }) => (
               <Card key={item.id} style={styles.card}>
                 <Card.Title
-                  title={item.details.category}
-                  titleVariant="titleMedium"
-                  titleStyle={styles.title}
+                  title={
+                    <Text variant="titleMedium" style={styles.title}>
+                      {item.details.category.split(".")[0]} (
+                      {item.details.category.split(".")[1]})
+                    </Text>
+                  }
                   subtitle={
                     <View style={styles.subtitle}>
-                      <Text>{`${moment(item.time.slot.toDate()).format(
-                        "hh:mmA"
-                      )} | ${item.details.game_no}`}</Text>
+                      {!!(item.time.slot && item.details.game_no) && (
+                        <Text>{`${moment(item.time.slot.toDate()).format(
+                          "hh:mmA"
+                        )} | ${item.details.game_no}`}</Text>
+                      )}
                       <Text
                         style={{
                           ...styles.subtitle_status,
@@ -222,11 +227,12 @@ export default ({ navigation }: any) => {
                                 : "normal",
                           }}
                         >
-                          {item.players.team_a.player_1.first_name[0]}.{" "}
-                          {item.players.team_a.player_1.last_name}{" "}
+                          {item.players.team_a.player_1.use_nickname
+                            ? item.players.team_a.player_1.nickname
+                            : `${item.players.team_a.player_1.first_name[0]}. ${item.players.team_a.player_1.last_name}`}
                         </Text>
                       </View>
-                      {!!item.players.team_a.player_2.first_name && (
+                      {item.details.category.split(".")[1] === "doubles" && (
                         <View style={styles.scoreboard}>
                           <Text
                             variant="titleMedium"
@@ -238,8 +244,9 @@ export default ({ navigation }: any) => {
                                   : "normal",
                             }}
                           >
-                            {item.players.team_a.player_2.first_name[0]}.{" "}
-                            {item.players.team_a.player_2.last_name}{" "}
+                            {item.players.team_a.player_2.use_nickname
+                              ? item.players.team_a.player_2.nickname
+                              : `${item.players.team_a.player_2.first_name[0]}. ${item.players.team_a.player_2.last_name}`}
                           </Text>
                         </View>
                       )}
@@ -301,12 +308,12 @@ export default ({ navigation }: any) => {
                                 : "normal",
                           }}
                         >
-                          {" "}
-                          {item.players.team_b.player_1.first_name[0]}.{" "}
-                          {item.players.team_b.player_1.last_name}
+                          {item.players.team_b.player_1.use_nickname
+                            ? item.players.team_b.player_1.nickname
+                            : `${item.players.team_b.player_1.first_name[0]}. ${item.players.team_b.player_1.last_name}`}
                         </Text>
                       </View>
-                      {!!item.players.team_b.player_2.first_name && (
+                      {item.details.category.split(".")[1] === "doubles" && (
                         <View
                           style={{
                             ...styles.scoreboard,
@@ -323,9 +330,9 @@ export default ({ navigation }: any) => {
                                   : "normal",
                             }}
                           >
-                            {" "}
-                            {item.players.team_b.player_2.first_name[0]}.{" "}
-                            {item.players.team_b.player_2.last_name}
+                            {item.players.team_b.player_2.use_nickname
+                              ? item.players.team_b.player_2.nickname
+                              : `${item.players.team_b.player_2.first_name[0]}. ${item.players.team_b.player_2.last_name}`}
                           </Text>
                         </View>
                       )}

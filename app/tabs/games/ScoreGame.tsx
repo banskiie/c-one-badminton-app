@@ -4,20 +4,12 @@ import {
   getDoc,
   getDocs,
   onSnapshot,
-  orderBy,
   query,
   runTransaction,
   updateDoc,
   where,
 } from "firebase/firestore"
-import {
-  ActivityIndicator,
-  Button,
-  IconButton,
-  List,
-  Surface,
-  Text,
-} from "react-native-paper"
+import { Button, IconButton, List, Surface, Text } from "react-native-paper"
 import { useEffect, useRef, useState } from "react"
 import { StyleSheet, ScrollView, View, Animated } from "react-native"
 import { FIRESTORE_DB } from "../../../firebase"
@@ -38,7 +30,7 @@ const Score = ({ route, navigation }) => {
   const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
   // Loading
   const [loading, setLoading] = useState<boolean>(false)
-  const [changingSet, setChangingSet] = useState<boolean>(false)
+  const [changingSet, setChangingSet] = useState<boolean>(true)
 
   // Fetch Game Data
   useEffect(() => {
@@ -47,13 +39,14 @@ const Score = ({ route, navigation }) => {
       next: (snapshot) => {
         if (snapshot.exists()) {
           const snap = snapshot.data()
-          if (!!snap.players.team_a.player_2.first_name) {
+          if (snap.details.category.split(".")[1] === "doubles") {
             setHasPlayer2(true)
           } else {
             setHasPlayer2(false)
           }
           setData(snap)
           setGameRef(ref)
+          setChangingSet(false)
         }
       },
     })
@@ -407,7 +400,8 @@ const Score = ({ route, navigation }) => {
             <View
               style={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection:
+                  data?.details.playing_set % 2 === 0 ? "row-reverse" : "row",
                 justifyContent: "space-between",
               }}
             >
@@ -478,7 +472,8 @@ const Score = ({ route, navigation }) => {
             <View
               style={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection:
+                  data?.details.playing_set % 2 === 0 ? "row-reverse" : "row",
                 justifyContent: "space-between",
               }}
             >
@@ -510,7 +505,7 @@ const Score = ({ route, navigation }) => {
                   >
                     <IconButton
                       icon="plus"
-                      size={18}
+                      size={24}
                       mode="contained-tonal"
                       containerColor="#ddf6dd"
                       onPress={() => score("a1")}
@@ -531,9 +526,9 @@ const Score = ({ route, navigation }) => {
                         fontWeight: "bold",
                       }}
                     >
-                      {data?.players.team_a.player_1.first_name +
-                        " " +
-                        data?.players.team_a.player_1.last_name}
+                      {data?.players.team_a.player_1.use_nickname
+                        ? data?.players.team_a.player_1.nickname
+                        : `${data?.players.team_a.player_1.first_name} ${data?.players.team_a.player_1.last_name}`}
                     </Text>
                   </View>
                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
@@ -564,7 +559,7 @@ const Score = ({ route, navigation }) => {
                     >
                       <IconButton
                         icon="plus"
-                        size={18}
+                        size={24}
                         mode="contained-tonal"
                         containerColor="#ddf6dd"
                         onPress={() => score("a2")}
@@ -580,9 +575,9 @@ const Score = ({ route, navigation }) => {
                         }
                       />
                       <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                        {data?.players.team_a.player_2.first_name +
-                          " " +
-                          data?.players.team_a.player_2.last_name}
+                        {data?.players.team_a.player_2.use_nickname
+                          ? data?.players.team_a.player_2.nickname
+                          : `${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
                       </Text>
                     </View>
                     <Text style={{ fontSize: 30, fontWeight: "bold" }}>
@@ -625,7 +620,7 @@ const Score = ({ route, navigation }) => {
                   >
                     <IconButton
                       icon="plus"
-                      size={18}
+                      size={24}
                       mode="contained-tonal"
                       containerColor="#FAC898"
                       onPress={() => score("b1")}
@@ -641,9 +636,9 @@ const Score = ({ route, navigation }) => {
                       }
                     />
                     <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                      {data?.players.team_b.player_1.first_name +
-                        " " +
-                        data?.players.team_b.player_1.last_name}
+                      {data?.players.team_b.player_1.use_nickname
+                        ? data?.players.team_b.player_1.nickname
+                        : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
                     </Text>
                   </View>
                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
@@ -674,7 +669,7 @@ const Score = ({ route, navigation }) => {
                     >
                       <IconButton
                         icon="plus"
-                        size={18}
+                        size={24}
                         mode="contained-tonal"
                         containerColor="#FAC898"
                         onPress={() => score("b2")}
@@ -690,9 +685,9 @@ const Score = ({ route, navigation }) => {
                         }
                       />
                       <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                        {data?.players.team_b.player_2.first_name +
-                          " " +
-                          data?.players.team_b.player_2.last_name}
+                        {data?.players.team_b.player_2.use_nickname
+                          ? data?.players.team_b.player_2.nickname
+                          : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
                       </Text>
                     </View>
                     <Text style={{ fontSize: 30, fontWeight: "bold" }}>
@@ -788,7 +783,7 @@ const Scoresheet = ({ route }) => {
       next: (snapshot) => {
         if (snapshot.exists()) {
           const snap = snapshot.data()
-          if (!!snap.players.team_a.player_2.first_name) {
+          if (snap.details.category.split(".")[1] === "doubles") {
             setHasPlayer2(true)
           } else {
             setHasPlayer2(false)
@@ -818,8 +813,10 @@ const Scoresheet = ({ route }) => {
             }}
           >
             <Text variant="bodyLarge">
-              {data?.players.team_a.player_1.first_name[0]}.{" "}
-              {data?.players.team_a.player_1.last_name} (
+              {data?.players.team_a.player_1.use_nickname
+                ? data?.players.team_a.player_1.nickname
+                : `${data?.players.team_a.player_1.first_name[0]}. ${data?.players.team_a.player_1.last_name}`}{" "}
+              (
               {
                 data?.sets[`set_${data.details.playing_set}`].scoresheet.filter(
                   (round: any) => round?.scorer === "a1"
@@ -838,8 +835,10 @@ const Scoresheet = ({ route }) => {
               }}
             >
               <Text variant="bodyLarge">
-                {data?.players.team_a.player_2.first_name[0]}.{" "}
-                {data?.players.team_a.player_2.last_name} (
+                {data?.players.team_a.player_2.use_nickname
+                  ? data?.players.team_a.player_2.nickname
+                  : `${data?.players.team_a.player_2.first_name[0]}. ${data?.players.team_a.player_2.last_name}`}{" "}
+                (
                 {
                   data?.sets[
                     `set_${data.details.playing_set}`
@@ -862,8 +861,10 @@ const Scoresheet = ({ route }) => {
             }}
           >
             <Text variant="bodyLarge">
-              {data?.players.team_b.player_1.first_name[0]}.{" "}
-              {data?.players.team_b.player_1.last_name} (
+              {data?.players.team_b.player_1.use_nickname
+                ? data?.players.team_b.player_1.nickname
+                : `${data?.players.team_b.player_1.first_name[0]}. ${data?.players.team_b.player_1.last_name}`}{" "}
+              (
               {
                 data?.sets[`set_${data.details.playing_set}`].scoresheet.filter(
                   (round: any) => round?.scorer === "b1"
@@ -883,8 +884,10 @@ const Scoresheet = ({ route }) => {
               }}
             >
               <Text variant="bodyLarge">
-                {data?.players.team_b.player_2.first_name[0]}.{" "}
-                {data?.players.team_b.player_2.last_name} (
+                {data?.players.team_b.player_2.use_nickname
+                  ? data?.players.team_b.player_2.nickname
+                  : `${data?.players.team_b.player_2.first_name[0]}. ${data?.players.team_b.player_2.last_name}`}{" "}
+                (
                 {
                   data?.sets[
                     `set_${data.details.playing_set}`
@@ -1001,7 +1004,7 @@ const Details = ({ route }) => {
       next: (snapshot) => {
         if (snapshot.exists()) {
           const snap = snapshot.data()
-          if (!!snap.players.team_a.player_2.first_name) {
+          if (snap.details.category.split(".")[1] === "doubles") {
             setHasPlayer2(true)
           } else {
             setHasPlayer2(false)
@@ -1031,7 +1034,9 @@ const Details = ({ route }) => {
           <List.Item
             style={{ paddingLeft: 20 }}
             title="Category"
-            description={data?.details.category}
+            description={`${data?.details.category.split(".")[0]} (${
+              data?.details.category.split(".")[1]
+            })`}
             descriptionStyle={{ textTransform: "capitalize" }}
           />
           <List.Item
@@ -1043,16 +1048,21 @@ const Details = ({ route }) => {
             style={{ paddingLeft: 20 }}
             title="Status"
             description={data?.statuses.current}
+            descriptionStyle={{ textTransform: "capitalize" }}
           />
           <List.Item
             style={{ paddingLeft: 20 }}
             title="Game No."
-            description={data?.details.game_no}
+            description={
+              data?.details.game_no !== "" ? data?.details.game_no : "N/A"
+            }
           />
           <List.Item
             style={{ paddingLeft: 20 }}
             title="Group No."
-            description={data?.details.group_no}
+            description={
+              data?.details.group_no !== "" ? data?.details.group_no : "N/A"
+            }
           />
           <List.Item
             style={{ paddingLeft: 20 }}
@@ -1090,13 +1100,21 @@ const Details = ({ route }) => {
             <List.Item
               style={{ paddingLeft: 40 }}
               title="Player 1"
-              description={`${data?.players.team_a.player_1.first_name} ${data?.players.team_a.player_1.last_name}`}
+              description={
+                data?.players.team_a.player_1.use_nickname
+                  ? data?.players.team_a.player_1.nickname
+                  : `${data?.players.team_a.player_1.first_name[0]}. ${data?.players.team_a.player_1.last_name}`
+              }
             />
             {hasPlayer2 && (
               <List.Item
                 style={{ paddingLeft: 40 }}
                 title="Player 2"
-                description={`${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
+                description={
+                  data?.players.team_a.player_2.use_nickname
+                    ? data?.players.team_a.player_2.nickname
+                    : `${data?.players.team_a.player_2.first_name[0]}. ${data?.players.team_a.player_2.last_name}`
+                }
               />
             )}
           </List.Accordion>
@@ -1113,13 +1131,21 @@ const Details = ({ route }) => {
             <List.Item
               style={{ paddingLeft: 40 }}
               title="Player 1"
-              description={`${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
+              description={
+                data?.players.team_b.player_1.use_nickname
+                  ? data?.players.team_b.player_1.nickname
+                  : `${data?.players.team_b.player_1.first_name[0]}. ${data?.players.team_b.player_1.last_name}`
+              }
             />
             {hasPlayer2 && (
               <List.Item
                 style={{ paddingLeft: 40 }}
                 title="Player 2"
-                description={`${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
+                description={
+                  data?.players.team_b.player_2.use_nickname
+                    ? data?.players.team_b.player_2.nickname
+                    : `${data?.players.team_b.player_2.first_name[0]}. ${data?.players.team_b.player_2.last_name}`
+                }
               />
             )}
           </List.Accordion>
