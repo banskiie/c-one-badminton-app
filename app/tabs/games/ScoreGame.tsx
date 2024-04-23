@@ -1,7 +1,6 @@
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -32,6 +31,7 @@ import Timer from "../../components/Timer"
 import { Dropdown } from "react-native-element-dropdown"
 import ForceWin from "../../components/dialogs/ForceWin"
 import ResetSet from "../../components/dialogs/ResetSet"
+import StartGame from "../../components/dialogs/StartGame"
 
 const Tab = createMaterialTopTabNavigator()
 
@@ -43,85 +43,94 @@ const Score = ({ route, navigation }) => {
   // Loading
   const [loading, setLoading] = useState<boolean>(false)
   const [changingSet, setChangingSet] = useState<boolean>(true)
+  // Dialogs
+  const [openStartGame, setOpenStartGame] = useState<boolean>(false)
 
   // Fetch Game Data
   useEffect(() => {
-    const ref = doc(FIRESTORE_DB, "games", id)
-    const sub = onSnapshot(ref, {
-      next: (snapshot) => {
-        if (snapshot.exists()) {
-          const snap = snapshot.data()
-          if (snap.details.category.split(".")[1] === "doubles") {
-            setHasPlayer2(true)
-          } else {
-            setHasPlayer2(false)
-          }
-          setData(snap)
-          setGameRef(ref)
-          setChangingSet(false)
+    if (id) {
+      const fetchGameData = async () => {
+        try {
+          const ref = doc(FIRESTORE_DB, "games", id)
+          onSnapshot(ref, {
+            next: (snapshot) => {
+              if (snapshot.exists()) {
+                const snap = snapshot.data()
+                if (snap.details.category.split(".")[1] === "doubles") {
+                  setHasPlayer2(true)
+                } else {
+                  setHasPlayer2(false)
+                }
+                setData(snap)
+                setGameRef(ref)
+                setChangingSet(false)
+              }
+            },
+          })
+        } catch (error: any) {
+          console.error(error)
         }
-      },
-    })
+      }
 
-    return () => sub()
+      fetchGameData()
+    }
   }, [id])
 
-  const start = async () => {
+  useEffect(() => {
+    if (data) {
+      const switch_score = Math.ceil(data.details.max_score / 2)
+      if (
+        !!(
+          data.sets[`set_${data.details.playing_set}`].a_score ===
+            switch_score ||
+          data.sets[`set_${data.details.playing_set}`].b_score === switch_score
+        ) &&
+        !data.sets[`set_${data.details.playing_set}`].switch
+      ) {
+        switchSide()
+      }
+    }
+  }, [data])
+
+  const switchSide = async () => {
     setLoading(true)
     try {
-      await runTransaction(FIRESTORE_DB, async (transaction) => {
-        // Disable All Other Games to Inactive
-        const gamesRef = collection(FIRESTORE_DB, "games")
-        const gamesQuery = query(
-          gamesRef,
-          where("details.court", "==", data.details.court),
-          where("statuses.active", "==", true)
-        )
-        const gamesSnap = await getDocs(gamesQuery)
-
-        gamesSnap.forEach((doc) => {
-          const gameRef = doc.ref
-          const docData = doc.data()
-          transaction.update(gameRef, {
-            ...docData,
-            statuses: {
-              ...docData.statuses,
-              active: false,
-            },
-          })
-        })
-
-        // Set Current Selected Game as Active
-        const currentRef = doc(FIRESTORE_DB, "games", id)
-        const currentDoc = await getDoc(currentRef)
-        if (currentDoc.exists()) {
-          const data = currentDoc.data()
-          transaction.update(currentRef, {
-            ...data,
-            statuses: {
-              ...data.statuses,
-              active: true,
-              current: "current",
-            },
-            time: {
-              ...data.time,
-              start: moment().toDate(),
-            },
-          })
-        }
-
-        // Update court status to active
-        const courtRef = doc(FIRESTORE_DB, "courts", data.details.court)
-        const courtDoc = await getDoc(courtRef)
-        if (courtDoc.exists()) {
-          transaction.update(courtRef, { active: true })
-        }
+      await updateDoc(doc(FIRESTORE_DB, "games", id), {
+        sets: {
+          ...data.sets,
+          [`set_${data.details.playing_set}`]: {
+            ...data.sets[`set_${data.details.playing_set}`],
+            switch: !data.sets[`set_${data.details.playing_set}`].switch,
+          },
+        },
       })
     } catch (error: any) {
       console.error(error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleStartGame = () => {
+    setOpenStartGame((prev: boolean) => !prev)
+  }
+
+  const detectWinner = (
+    a_score: number,
+    b_score: number,
+    winning_score: number,
+    plus_two_rule: boolean,
+    max_score: number
+  ) => {
+    const a_wins =
+      a_score >= winning_score && (!plus_two_rule || a_score - b_score === 2)
+    const b_wins =
+      b_score >= winning_score && (!plus_two_rule || b_score - a_score === 2)
+
+    if (a_wins || a_score >= max_score) return "a"
+    if (b_wins || b_score >= max_score) return "b"
+
+    return ""
   }
 
   const score = async (scorer: string) => {
@@ -132,6 +141,7 @@ const Score = ({ route, navigation }) => {
       const team = scorer[0]
       updatedScoreSheet[data.sets[current].current_round - 1] = {
         team_scored: team,
+        scored_at: Date.now(),
         current_a_score: (team == "a" ? 1 : 0) + data?.sets[current].a_score,
         current_b_score: (team == "b" ? 1 : 0) + data?.sets[current].b_score,
         scorer: scorer,
@@ -148,10 +158,13 @@ const Score = ({ route, navigation }) => {
                 a_score: data.sets[current].a_score + 1,
                 scoresheet: [...updatedScoreSheet],
                 last_team_scored: team,
-                winner:
-                  data.sets[current].a_score + 1 >= data.details.max_score
-                    ? "a"
-                    : "",
+                winner: detectWinner(
+                  data.sets[current].a_score + 1,
+                  data.sets[current].b_score,
+                  data.details.max_score,
+                  data.details.plus_two_rule,
+                  data.details.plus_two_score
+                ),
               },
             },
           })
@@ -166,10 +179,13 @@ const Score = ({ route, navigation }) => {
                 b_score: data.sets[current].b_score + 1,
                 scoresheet: [...updatedScoreSheet],
                 last_team_scored: team,
-                winner:
-                  data.sets[current].b_score + 1 >= data.details.max_score
-                    ? "b"
-                    : "",
+                winner: detectWinner(
+                  data.sets[current].a_score,
+                  data.sets[current].b_score + 1,
+                  data.details.max_score,
+                  data.details.plus_two_rule,
+                  data.details.plus_two_score
+                ),
               },
             },
           })
@@ -299,7 +315,10 @@ const Score = ({ route, navigation }) => {
 
   return (
     <>
-      {!!data?.time.start ? (
+      <Portal>
+        <StartGame open={openStartGame} onClose={handleStartGame} id={id} />
+      </Portal>
+      {data?.time.start !== "" ? (
         <ScrollView>
           <View style={{ flex: 1, padding: 12, gap: 8 }}>
             {data?.details.no_of_sets > 1 && (
@@ -329,7 +348,7 @@ const Score = ({ route, navigation }) => {
                 mode="default"
                 labelField="label"
                 valueField="value"
-                placeholder="Select Set"
+                placeholder=""
                 onChange={(item: any) => changeSet(item.value)}
               />
             )}
@@ -454,7 +473,10 @@ const Score = ({ route, navigation }) => {
                 <View
                   style={{
                     display: "flex",
-                    flexDirection: "row",
+                    flexDirection: data.sets[`set_${data.details.playing_set}`]
+                      .switch
+                      ? "row-reverse"
+                      : "row",
                     alignItems: "center",
                     justifyContent: "space-between",
                   }}
@@ -462,7 +484,11 @@ const Score = ({ route, navigation }) => {
                   <View
                     style={{
                       display: "flex",
-                      flexDirection: "row",
+                      flexDirection: data.sets[
+                        `set_${data.details.playing_set}`
+                      ].switch
+                        ? "row-reverse"
+                        : "row",
                       alignItems: "center",
                     }}
                   >
@@ -475,12 +501,6 @@ const Score = ({ route, navigation }) => {
                       loading={loading}
                       disabled={
                         loading ||
-                        !!(
-                          data.sets[`set_${data.details.playing_set}`]
-                            .a_score >= data.details.max_score ||
-                          data.sets[`set_${data.details.playing_set}`]
-                            .b_score >= data.details.max_score
-                        ) ||
                         !!data.sets[`set_${data.details.playing_set}`].winner
                       }
                     />
@@ -509,7 +529,11 @@ const Score = ({ route, navigation }) => {
                   <View
                     style={{
                       display: "flex",
-                      flexDirection: "row",
+                      flexDirection: data.sets[
+                        `set_${data.details.playing_set}`
+                      ].switch
+                        ? "row-reverse"
+                        : "row",
                       alignItems: "center",
                       justifyContent: "space-between",
                     }}
@@ -517,7 +541,11 @@ const Score = ({ route, navigation }) => {
                     <View
                       style={{
                         display: "flex",
-                        flexDirection: "row",
+                        flexDirection: data.sets[
+                          `set_${data.details.playing_set}`
+                        ].switch
+                          ? "row-reverse"
+                          : "row",
                         alignItems: "center",
                       }}
                     >
@@ -530,12 +558,6 @@ const Score = ({ route, navigation }) => {
                         loading={loading}
                         disabled={
                           loading ||
-                          !!(
-                            data.sets[`set_${data.details.playing_set}`]
-                              .a_score >= data.details.max_score ||
-                            data.sets[`set_${data.details.playing_set}`]
-                              .b_score >= data.details.max_score
-                          ) ||
                           !!data.sets[`set_${data.details.playing_set}`].winner
                         }
                       />
@@ -571,42 +593,14 @@ const Score = ({ route, navigation }) => {
                 <View
                   style={{
                     display: "flex",
-                    flexDirection: "row",
+                    flexDirection: data.sets[`set_${data.details.playing_set}`]
+                      .switch
+                      ? "row-reverse"
+                      : "row",
                     alignItems: "center",
                     justifyContent: "space-between",
                   }}
                 >
-                  <View
-                    style={{
-                      display: "flex",
-                      flexDirection: "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <IconButton
-                      icon="plus"
-                      size={24}
-                      mode="contained-tonal"
-                      containerColor="#FAC898"
-                      onPress={() => score("b1")}
-                      loading={loading}
-                      disabled={
-                        loading ||
-                        !!(
-                          data.sets[`set_${data.details.playing_set}`]
-                            .a_score >= data.details.max_score ||
-                          data.sets[`set_${data.details.playing_set}`]
-                            .b_score >= data.details.max_score
-                        ) ||
-                        !!data.sets[`set_${data.details.playing_set}`].winner
-                      }
-                    />
-                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                      {data?.players.team_b.player_1.use_nickname
-                        ? data?.players.team_b.player_1.nickname
-                        : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
-                    </Text>
-                  </View>
                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
                     {
                       data?.sets[
@@ -616,47 +610,49 @@ const Score = ({ route, navigation }) => {
                       ).length
                     }
                   </Text>
+                  <View
+                    style={{
+                      display: "flex",
+                      flexDirection: data.sets[
+                        `set_${data.details.playing_set}`
+                      ].switch
+                        ? "row-reverse"
+                        : "row",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+                      {data?.players.team_b.player_1.use_nickname
+                        ? data?.players.team_b.player_1.nickname
+                        : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
+                    </Text>
+                    <IconButton
+                      icon="plus"
+                      size={24}
+                      mode="contained-tonal"
+                      containerColor="#FAC898"
+                      onPress={() => score("b1")}
+                      loading={loading}
+                      disabled={
+                        loading ||
+                        !!data.sets[`set_${data.details.playing_set}`].winner
+                      }
+                    />
+                  </View>
                 </View>
                 {hasPlayer2 && (
                   <View
                     style={{
                       display: "flex",
-                      flexDirection: "row",
+                      flexDirection: data.sets[
+                        `set_${data.details.playing_set}`
+                      ].switch
+                        ? "row-reverse"
+                        : "row",
                       alignItems: "center",
                       justifyContent: "space-between",
                     }}
                   >
-                    <View
-                      style={{
-                        display: "flex",
-                        flexDirection: "row",
-                        alignItems: "center",
-                      }}
-                    >
-                      <IconButton
-                        icon="plus"
-                        size={24}
-                        mode="contained-tonal"
-                        containerColor="#FAC898"
-                        onPress={() => score("b2")}
-                        loading={loading}
-                        disabled={
-                          loading ||
-                          !!(
-                            data.sets[`set_${data.details.playing_set}`]
-                              .a_score >= data.details.max_score ||
-                            data.sets[`set_${data.details.playing_set}`]
-                              .b_score >= data.details.max_score
-                          ) ||
-                          !!data.sets[`set_${data.details.playing_set}`].winner
-                        }
-                      />
-                      <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                        {data?.players.team_b.player_2.use_nickname
-                          ? data?.players.team_b.player_2.nickname
-                          : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
-                      </Text>
-                    </View>
                     <Text style={{ fontSize: 30, fontWeight: "bold" }}>
                       {
                         data?.sets[
@@ -666,6 +662,35 @@ const Score = ({ route, navigation }) => {
                         ).length
                       }
                     </Text>
+                    <View
+                      style={{
+                        display: "flex",
+                        flexDirection: data.sets[
+                          `set_${data.details.playing_set}`
+                        ].switch
+                          ? "row-reverse"
+                          : "row",
+                        alignItems: "center",
+                      }}
+                    >
+                      <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+                        {data?.players.team_b.player_2.use_nickname
+                          ? data?.players.team_b.player_2.nickname
+                          : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
+                      </Text>
+                      <IconButton
+                        icon="plus"
+                        size={24}
+                        mode="contained-tonal"
+                        containerColor="#FAC898"
+                        onPress={() => score("b2")}
+                        loading={loading}
+                        disabled={
+                          loading ||
+                          !!data.sets[`set_${data.details.playing_set}`].winner
+                        }
+                      />
+                    </View>
                   </View>
                 )}
               </View>
@@ -700,10 +725,26 @@ const Score = ({ route, navigation }) => {
           </View>
         </ScrollView>
       ) : (
-        <View>
-          <Button mode="contained" onPress={start}>
-            Start
-          </Button>
+        <View
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <TouchableRipple
+            style={{
+              ...styles.touch,
+              backgroundColor: "#B4D3B2",
+            }}
+            disabled={loading}
+            onPress={handleStartGame}
+          >
+            <>
+              {loading ? (
+                <ActivityIndicator color="darkgreen" size={56} />
+              ) : (
+                <Icon color="darkgreen" source="star" size={56} />
+              )}
+              <Text style={{ color: "darkgreen" }}>Start</Text>
+            </>
+          </TouchableRipple>
         </View>
       )}
     </>
@@ -714,224 +755,329 @@ const Scoresheet = ({ route }) => {
   const { id } = route.params
   const [data, setData] = useState<any>()
   const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
+  const [scoresheet, setScoresheet] = useState<any[]>([])
 
   // Fetch Game Data
   useEffect(() => {
-    const ref = doc(FIRESTORE_DB, "games", id)
-    const sub = onSnapshot(ref, {
-      next: (snapshot) => {
-        if (snapshot.exists()) {
-          const snap = snapshot.data()
-          if (snap.details.category.split(".")[1] === "doubles") {
-            setHasPlayer2(true)
-          } else {
-            setHasPlayer2(false)
-          }
-          setData(snap)
+    if (id) {
+      const fetchGameData = async () => {
+        try {
+          const ref = doc(FIRESTORE_DB, "games", id)
+          onSnapshot(ref, {
+            next: (snapshot) => {
+              if (snapshot.exists()) {
+                const snap = snapshot.data()
+                if (snap.details.category.split(".")[1] === "doubles") {
+                  setHasPlayer2(true)
+                } else {
+                  setHasPlayer2(false)
+                }
+                setData(snap)
+              }
+            },
+          })
+        } catch (error: any) {
+          console.error(error)
         }
-      },
-    })
+      }
 
-    return () => sub()
+      fetchGameData()
+    }
   }, [id])
 
+  useEffect(() => {
+    if (data?.sets[`set_${data.details.playing_set}`].scoresheet.length > 0) {
+      setScoresheet(
+        data?.sets[`set_${data.details.playing_set}`].scoresheet.reverse()
+      )
+    } else {
+      setScoresheet([])
+    }
+  }, [data])
+
   return (
-    <>
-      {/* Scoresheet */}
-      <View style={styles.scoresheet}>
-        {/* Players */}
-        <View style={{ minWidth: "30%" }}>
-          {/* TEAM A */}
-          {/* Player 1 */}
-          <View
-            style={{
-              ...styles.box,
-              width: "100%",
-              alignItems: "flex-start",
-              paddingLeft: 5,
-            }}
-          >
-            <Text variant="bodyLarge">
+    <View style={{ height: "100%", padding: 20 }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+        }}
+      >
+        {/* TEAM A NAMES */}
+        <View
+          style={{
+            width: "40%",
+            justifyContent: "space-evenly",
+            flexDirection: "row",
+          }}
+        >
+          <View style={{ width: "40%" }}>
+            <Text
+              style={{
+                textAlign: "center",
+                fontSize: 21,
+
+                paddingVertical: 20,
+              }}
+            >
               {data?.players.team_a.player_1.use_nickname
                 ? data?.players.team_a.player_1.nickname
-                : `${data?.players.team_a.player_1.first_name[0]}. ${data?.players.team_a.player_1.last_name}`}{" "}
-              (
-              {
-                data?.sets[`set_${data.details.playing_set}`].scoresheet.filter(
-                  (round: any) => round?.scorer === "a1"
-                ).length
-              }
-              )
+                : `${data?.players.team_a.player_1.first_name[0]}. ${data?.players.team_a.player_1.last_name}`}
             </Text>
           </View>
           {hasPlayer2 && (
-            <View
-              style={{
-                ...styles.box,
-                width: "100%",
-                alignItems: "flex-start",
-                paddingLeft: 5,
-              }}
-            >
-              <Text variant="bodyLarge">
+            <View style={{ width: "40%" }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 21,
+                  paddingVertical: 20,
+                }}
+              >
                 {data?.players.team_a.player_2.use_nickname
                   ? data?.players.team_a.player_2.nickname
-                  : `${data?.players.team_a.player_2.first_name[0]}. ${data?.players.team_a.player_2.last_name}`}{" "}
-                (
-                {
-                  data?.sets[
-                    `set_${data.details.playing_set}`
-                  ].scoresheet.filter((round: any) => round?.scorer === "a2")
-                    .length
-                }
-                )
-              </Text>
-            </View>
-          )}
-          {/* TEAM B */}
-          {/* Player 1 */}
-          <View
-            style={{
-              ...styles.box,
-              backgroundColor: "#a6a6a6",
-              width: "100%",
-              alignItems: "flex-start",
-              paddingLeft: 5,
-            }}
-          >
-            <Text variant="bodyLarge">
-              {data?.players.team_b.player_1.use_nickname
-                ? data?.players.team_b.player_1.nickname
-                : `${data?.players.team_b.player_1.first_name[0]}. ${data?.players.team_b.player_1.last_name}`}{" "}
-              (
-              {
-                data?.sets[`set_${data.details.playing_set}`].scoresheet.filter(
-                  (round: any) => round?.scorer === "b1"
-                ).length
-              }
-              )
-            </Text>
-          </View>
-          {hasPlayer2 && (
-            <View
-              style={{
-                ...styles.box,
-                backgroundColor: "#a6a6a6",
-                width: "100%",
-                alignItems: "flex-start",
-                paddingLeft: 5,
-              }}
-            >
-              <Text variant="bodyLarge">
-                {data?.players.team_b.player_2.use_nickname
-                  ? data?.players.team_b.player_2.nickname
-                  : `${data?.players.team_b.player_2.first_name[0]}. ${data?.players.team_b.player_2.last_name}`}{" "}
-                (
-                {
-                  data?.sets[
-                    `set_${data.details.playing_set}`
-                  ].scoresheet.filter((round: any) => round?.scorer === "b2")
-                    .length
-                }
-                )
+                  : `${data?.players.team_a.player_2.first_name[0]}. ${data?.players.team_a.player_2.last_name}`}
               </Text>
             </View>
           )}
         </View>
-        {/* Score */}
-        <ScrollView
-          horizontal={true}
+        <View
           style={{
-            display: "flex",
+            width: "40%",
+            justifyContent: "space-evenly",
             flexDirection: "row",
-            width: "60%",
           }}
         >
-          <View>
-            {hasPlayer2 && (
-              <Surface mode="flat" style={styles.box} elevation={5}>
-                {""}
-              </Surface>
-            )}
-            <Surface mode="flat" style={styles.box} elevation={5}>
-              <Text variant="bodyLarge" style={styles.score}>
-                0
-              </Text>
-            </Surface>
-            <Surface
-              mode="flat"
-              style={{ ...styles.box, backgroundColor: "#a6a6a6" }}
-              elevation={5}
+          <View style={{ width: "40%" }}>
+            <Text
+              style={{
+                textAlign: "center",
+                fontSize: 21,
+                paddingVertical: 20,
+              }}
             >
-              <Text variant="bodyLarge" style={styles.score}>
+              {data?.players.team_b.player_1.use_nickname
+                ? data?.players.team_b.player_1.nickname
+                : `${data?.players.team_b.player_1.first_name[0]}. ${data?.players.team_b.player_1.last_name}`}
+            </Text>
+          </View>
+          {hasPlayer2 && (
+            <View style={{ width: "40%" }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 21,
+                  paddingVertical: 20,
+                }}
+              >
+                {data?.players.team_b.player_2.use_nickname
+                  ? data?.players.team_b.player_2.nickname
+                  : `${data?.players.team_b.player_2.first_name[0]}. ${data?.players.team_b.player_2.last_name}`}
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+      <ScrollView>
+        {scoresheet?.length > 0 &&
+          scoresheet.map((score: any, index: number) => (
+            <View
+              key={index}
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+              }}
+            >
+              <View
+                style={{
+                  width: "40%",
+                  justifyContent: "space-evenly",
+                  flexDirection: "row",
+                }}
+              >
+                <View style={{ width: "40%" }}>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontSize: 21,
+                      borderWidth: 1,
+                      paddingVertical: 20,
+                    }}
+                  >
+                    {score?.scorer === "a1" && score.current_a_score}
+                  </Text>
+                </View>
+                {hasPlayer2 && (
+                  <View style={{ width: "40%" }}>
+                    <Text
+                      style={{
+                        textAlign: "center",
+                        fontSize: 21,
+                        borderWidth: 1,
+                        paddingVertical: 20,
+                      }}
+                    >
+                      {score?.scorer === "a2" && score.current_b_score}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {data.time.start && (
+                <View
+                  style={{
+                    width: "20%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontSize: 21,
+                      paddingVertical: 20,
+                    }}
+                  >
+                    {String(
+                      moment(score.scored_at).diff(
+                        moment(
+                          data.time.start.seconds * 1000 +
+                            data.time.start.nanoseconds / 1000000
+                        ),
+                        "minutes"
+                      )
+                    ).padStart(2, "0")}
+                    :
+                    {String(
+                      moment(score.scored_at).diff(
+                        moment(
+                          data.time.start.seconds * 1000 +
+                            data.time.start.nanoseconds / 1000000
+                        ),
+                        "seconds"
+                      ) % 60
+                    ).padStart(2, "0")}
+                  </Text>
+                </View>
+              )}
+              <View
+                style={{
+                  width: "40%",
+                  justifyContent: "space-evenly",
+                  flexDirection: "row",
+                }}
+              >
+                <View style={{ width: "40%" }}>
+                  <Text
+                    style={{
+                      textAlign: "center",
+                      fontSize: 21,
+                      borderWidth: 1,
+                      paddingVertical: 20,
+                    }}
+                  >
+                    {score?.scorer === "b1" && score.current_b_score}
+                  </Text>
+                </View>
+                {hasPlayer2 && (
+                  <View style={{ width: "40%" }}>
+                    <Text
+                      style={{
+                        textAlign: "center",
+                        fontSize: 21,
+                        borderWidth: 1,
+                        paddingVertical: 20,
+                      }}
+                    >
+                      {score?.scorer === "b2" && score.current_b_score}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          ))}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          {/* TEAM A NAMES */}
+          <View
+            style={{
+              width: "40%",
+              justifyContent: "space-evenly",
+              flexDirection: "row",
+              marginBottom: 3,
+            }}
+          >
+            <View style={{ width: "40%" }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 21,
+                  borderWidth: 1,
+                  paddingVertical: 20,
+                }}
+              >
                 0
               </Text>
-            </Surface>
+            </View>
             {hasPlayer2 && (
-              <Surface
-                mode="flat"
-                style={{ ...styles.box, backgroundColor: "#a6a6a6" }}
-                elevation={5}
-              >
-                {""}
-              </Surface>
+              <View style={{ width: "40%" }}>
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontSize: 21,
+                    borderWidth: 1,
+                    paddingVertical: 20,
+                  }}
+                >
+                  0
+                </Text>
+              </View>
             )}
           </View>
-          {data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
-            0 && (
-            <>
-              {data?.sets[`set_${data.details.playing_set}`].scoresheet.map(
-                (score: any, index: number) => {
-                  return (
-                    <View key={index}>
-                      <Surface mode="flat" style={styles.box} elevation={5}>
-                        <Text style={styles.score} variant="bodyLarge">
-                          {score?.scorer === "a1" && score.current_a_score}
-                        </Text>
-                      </Surface>
-                      {hasPlayer2 && (
-                        <Surface mode="flat" style={styles.box} elevation={5}>
-                          <Text style={styles.score} variant="bodyLarge">
-                            {score?.scorer === "a2" && score.current_a_score}
-                          </Text>
-                        </Surface>
-                      )}
-                      <Surface
-                        mode="flat"
-                        style={{ ...styles.box, backgroundColor: "#a6a6a6" }}
-                        elevation={5}
-                      >
-                        <Text style={styles.score} variant="bodyLarge">
-                          {score?.scorer === "b1" && score.current_b_score}
-                        </Text>
-                      </Surface>
-                      {hasPlayer2 && (
-                        <Surface
-                          mode="flat"
-                          style={{
-                            ...styles.box,
-                            backgroundColor: "#a6a6a6",
-                          }}
-                          elevation={5}
-                        >
-                          <Text style={styles.score} variant="bodyLarge">
-                            {score?.scorer === "b2" && score.current_b_score}
-                          </Text>
-                        </Surface>
-                      )}
-                    </View>
-                  )
-                }
-              )}
-            </>
-          )}
-        </ScrollView>
-      </View>
-    </>
+          <View
+            style={{
+              width: "40%",
+              justifyContent: "space-evenly",
+              flexDirection: "row",
+            }}
+          >
+            <View style={{ width: "40%" }}>
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 21,
+                  borderWidth: 1,
+                  paddingVertical: 20,
+                }}
+              >
+                0
+              </Text>
+            </View>
+            {hasPlayer2 && (
+              <View style={{ width: "40%" }}>
+                <Text
+                  style={{
+                    textAlign: "center",
+                    fontSize: 21,
+                    borderWidth: 1,
+                    paddingVertical: 20,
+                  }}
+                >
+                  0
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </ScrollView>
+    </View>
   )
 }
 
-const Settings = ({ route }) => {
+const Settings = ({ navigation, route }) => {
   const { id } = route.params
   const [data, setData] = useState<any>()
   const [loading, setLoading] = useState<boolean>(false)
@@ -941,22 +1087,30 @@ const Settings = ({ route }) => {
 
   // Fetch Game Data
   useEffect(() => {
-    const ref = doc(FIRESTORE_DB, "games", id)
-    const sub = onSnapshot(ref, {
-      next: (snapshot) => {
-        if (snapshot.exists()) {
-          const snap = snapshot.data()
-          if (snap.details.category.split(".")[1] === "doubles") {
-            setHasPlayer2(true)
-          } else {
-            setHasPlayer2(false)
-          }
-          setData(snap)
+    if (id) {
+      const fetchGameData = async () => {
+        try {
+          const ref = doc(FIRESTORE_DB, "games", id)
+          onSnapshot(ref, {
+            next: (snapshot) => {
+              if (snapshot.exists()) {
+                const snap = snapshot.data()
+                if (snap.details.category.split(".")[1] === "doubles") {
+                  setHasPlayer2(true)
+                } else {
+                  setHasPlayer2(false)
+                }
+                setData(snap)
+              }
+            },
+          })
+        } catch (error: any) {
+          console.error(error)
         }
-      },
-    })
+      }
 
-    return () => sub()
+      fetchGameData()
+    }
   }, [id])
 
   const switchSide = async () => {
@@ -1024,134 +1178,151 @@ const Settings = ({ route }) => {
   }
 
   return (
-    <View style={styles.settings}>
+    <ScrollView>
       <Portal>
         <ForceWin open={openForceWin} onClose={handleForceWin} id={id} />
         <ResetSet open={openResetSet} onClose={handleResetSet} id={id} />
       </Portal>
-      <TouchableRipple
-        style={{
-          ...styles.touch,
-          backgroundColor: data?.statuses.active ? "#AEC6CF" : "#91B2BE",
-        }}
-        disabled={loading}
-        onPress={handleScoreboard}
-      >
-        <>
-          {loading ? (
-            <ActivityIndicator size={56} color="#273B42" />
-          ) : (
-            <Icon
-              source={data?.statuses.active ? "eye" : "eye-outline"}
-              size={56}
-              color="#273B42"
-            />
-          )}
-          <Text variant="labelLarge" style={{ color: "#273B42" }}>
-            {data?.statuses.active ? "Hide" : "Show"} Scoreboard
-          </Text>
-        </>
-      </TouchableRipple>
-      <TouchableRipple
-        style={{
-          ...styles.touch,
-          backgroundColor: "#D7CFC7",
-        }}
-        disabled={loading}
-        onPress={switchSide}
-      >
-        <>
-          {loading ? (
-            <ActivityIndicator color="black" size={56} />
-          ) : (
-            <View
-              style={{
-                width: "100%",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                variant="displaySmall"
-                style={{
-                  color: data?.sets[`set_${data.details.playing_set}`].switch
-                    ? "darkgreen"
-                    : "#FF8C00",
-                  fontWeight: "bold",
-                }}
-              >
-                {data?.sets[`set_${data.details.playing_set}`].switch
-                  ? "B"
-                  : "A"}
-              </Text>
-              <Icon color="black" source="swap-horizontal" size={56} />
-              <Text
-                variant="displaySmall"
-                style={{
-                  color: data?.sets[`set_${data.details.playing_set}`].switch
-                    ? "#FF8C00"
-                    : "darkgreen",
-                  fontWeight: "bold",
-                }}
-              >
-                {data?.sets[`set_${data.details.playing_set}`].switch
-                  ? "A"
-                  : "B"}
-              </Text>
-            </View>
-          )}
-          <Text variant="labelLarge" style={{ color: "black" }}>
-            Switch Team Sides
-          </Text>
-        </>
-      </TouchableRipple>
-      {!!(
-        data?.sets[`set_${data.details.playing_set}`].scoresheet.length > 0 ||
-        data?.sets[`set_${data.details.playing_set}`].winner
-      ) && (
+      <View style={styles.button_group}>
         <TouchableRipple
           style={{
             ...styles.touch,
-            backgroundColor: "pink",
+            backgroundColor: data?.statuses.active ? "#AEC6CF" : "#91B2BE",
           }}
           disabled={loading}
-          onPress={handleResetSet}
+          onPress={handleScoreboard}
         >
           <>
             {loading ? (
-              <ActivityIndicator color="red" size={56} />
+              <ActivityIndicator size={56} color="#273B42" />
             ) : (
-              <Icon color="red" source="restore-alert" size={56} />
+              <Icon
+                source={data?.statuses.active ? "eye" : "eye-outline"}
+                size={56}
+                color="#273B42"
+              />
             )}
-            <Text variant="labelLarge" style={{ color: "red" }}>
-              Reset Set
+            <Text style={{ color: "#273B42" }}>
+              {data?.statuses.active ? "Hide" : "Show"} Scoreboard
             </Text>
           </>
         </TouchableRipple>
-      )}
-      {!data?.sets[`set_${data.details.playing_set}`].winner && (
         <TouchableRipple
           style={{
             ...styles.touch,
-            backgroundColor: "#B4D3B2",
+            backgroundColor: "#D7CFC7",
           }}
           disabled={loading}
-          onPress={handleForceWin}
+          onPress={switchSide}
         >
           <>
             {loading ? (
-              <ActivityIndicator color="darkgreen" size={56} />
+              <ActivityIndicator color="black" size={56} />
             ) : (
-              <Icon color="darkgreen" source="star" size={56} />
+              <View
+                style={{
+                  width: "100%",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  variant="displaySmall"
+                  style={{
+                    color: data?.sets[`set_${data.details.playing_set}`].switch
+                      ? "darkgreen"
+                      : "#FF8C00",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {data?.sets[`set_${data.details.playing_set}`].switch
+                    ? "B"
+                    : "A"}
+                </Text>
+                <Icon color="black" source="swap-horizontal" size={56} />
+                <Text
+                  variant="displaySmall"
+                  style={{
+                    color: data?.sets[`set_${data.details.playing_set}`].switch
+                      ? "#FF8C00"
+                      : "darkgreen",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {data?.sets[`set_${data.details.playing_set}`].switch
+                    ? "A"
+                    : "B"}
+                </Text>
+              </View>
             )}
-            <Text variant="labelLarge" style={{ color: "darkgreen" }}>
-              Force Win Set
-            </Text>
+            <Text style={{ color: "black" }}>Switch Team Sides</Text>
           </>
         </TouchableRipple>
-      )}
-    </View>
+        {!!(
+          data?.sets[`set_${data.details.playing_set}`].scoresheet.length > 0 ||
+          data?.sets[`set_${data.details.playing_set}`].winner
+        ) && (
+          <TouchableRipple
+            style={{
+              ...styles.touch,
+              backgroundColor: "pink",
+            }}
+            disabled={loading}
+            onPress={handleResetSet}
+          >
+            <>
+              {loading ? (
+                <ActivityIndicator color="red" size={56} />
+              ) : (
+                <Icon color="red" source="restore-alert" size={56} />
+              )}
+              <Text style={{ color: "red" }}>Reset Set</Text>
+            </>
+          </TouchableRipple>
+        )}
+        {!data?.sets[`set_${data.details.playing_set}`].winner && (
+          <TouchableRipple
+            style={{
+              ...styles.touch,
+              backgroundColor: "#B4D3B2",
+            }}
+            disabled={loading}
+            onPress={handleForceWin}
+          >
+            <>
+              {loading ? (
+                <ActivityIndicator color="darkgreen" size={56} />
+              ) : (
+                <Icon color="darkgreen" source="star" size={56} />
+              )}
+              <Text style={{ color: "darkgreen" }}>Force Win Set</Text>
+            </>
+          </TouchableRipple>
+        )}
+      </View>
+      <View style={styles.button_group}>
+        <TouchableRipple
+          style={{
+            ...styles.touch,
+            backgroundColor: "#fff192",
+          }}
+          disabled={loading}
+          onPress={() => {
+            navigation.navigate("Add Game", { data, id })
+          }}
+        >
+          <>
+            {loading ? (
+              <ActivityIndicator color="#8B8000" size={56} />
+            ) : (
+              <Icon color="#8B8000" source="clipboard-edit-outline" size={56} />
+            )}
+            <Text style={{ color: "#8B8000" }}>Edit Game</Text>
+          </>
+        </TouchableRipple>
+      </View>
+    </ScrollView>
   )
 }
 
@@ -1162,22 +1333,30 @@ const Details = ({ route }) => {
 
   // Fetch Game Data
   useEffect(() => {
-    const ref = doc(FIRESTORE_DB, "games", id)
-    const sub = onSnapshot(ref, {
-      next: (snapshot) => {
-        if (snapshot.exists()) {
-          const snap = snapshot.data()
-          if (snap.details.category.split(".")[1] === "doubles") {
-            setHasPlayer2(true)
-          } else {
-            setHasPlayer2(false)
-          }
-          setData(snap)
+    if (id) {
+      const fetchGameData = async () => {
+        try {
+          const ref = doc(FIRESTORE_DB, "games", id)
+          onSnapshot(ref, {
+            next: (snapshot) => {
+              if (snapshot.exists()) {
+                const snap = snapshot.data()
+                if (snap.details.category.split(".")[1] === "doubles") {
+                  setHasPlayer2(true)
+                } else {
+                  setHasPlayer2(false)
+                }
+                setData(snap)
+              }
+            },
+          })
+        } catch (error: any) {
+          console.error(error)
         }
-      },
-    })
+      }
 
-    return () => sub()
+      fetchGameData()
+    }
   }, [id])
 
   // Expandables
@@ -1354,16 +1533,7 @@ const Details = ({ route }) => {
 export default ({ navigation, route }: any) => {
   const { id } = route.params
   const [data, setData] = useState<any>()
-  const fade = useRef(new Animated.Value(0)).current
-
-  // Fade Settings
-  useEffect(() => {
-    Animated.timing(fade, {
-      toValue: 1,
-      duration: 300,
-      useNativeDriver: true,
-    }).start()
-  }, [fade])
+  const [loading, setLoading] = useState<boolean>(true)
 
   // Screen Orientation
   useEffect(() => {
@@ -1374,19 +1544,26 @@ export default ({ navigation, route }: any) => {
     }
   }, [])
 
-  // Fetch Game Data
   useEffect(() => {
-    const ref = doc(FIRESTORE_DB, "games", id)
-    const sub = onSnapshot(ref, {
-      next: (snapshot) => {
-        if (snapshot.exists()) {
-          const snap = snapshot.data()
-          setData(snap)
+    if (id) {
+      const fetchGameData = async () => {
+        try {
+          const ref = doc(FIRESTORE_DB, "games", id)
+          onSnapshot(ref, {
+            next: (snapshot) => {
+              if (snapshot.exists()) {
+                setData(snapshot.data())
+              }
+              setLoading(false)
+            },
+          })
+        } catch (error: any) {
+          console.error(error)
         }
-      },
-    })
+      }
 
-    return () => sub()
+      fetchGameData()
+    }
   }, [id])
 
   // Navigation Header
@@ -1403,37 +1580,35 @@ export default ({ navigation, route }: any) => {
     }
   }, [data])
 
+  if (loading) {
+    return <Loading />
+  }
+
   return (
     <>
-      {!!data ? (
-        <Tab.Navigator
-          initialRouteName="Score"
-          screenOptions={{
-            tabBarIndicatorStyle: { backgroundColor: theme.colors.primary },
-          }}
-        >
-          <Tab.Screen name="Score" component={Score} initialParams={{ id }} />
-          <Tab.Screen
-            name="Scoresheet"
-            component={Scoresheet}
-            initialParams={{ id }}
-          />
-          <Tab.Screen
-            name="Settings"
-            component={Settings}
-            initialParams={{ id }}
-          />
-          <Tab.Screen
-            name="Details"
-            component={Details}
-            initialParams={{ id }}
-          />
-        </Tab.Navigator>
-      ) : (
-        <Animated.View style={{ opacity: fade }}>
-          <Loading />
-        </Animated.View>
-      )}
+      <Tab.Navigator
+        initialRouteName="Score"
+        screenOptions={{
+          tabBarIndicatorStyle: { backgroundColor: theme.colors.primary },
+        }}
+      >
+        {!!(id && data?.statuses.current !== "finished") && (
+          <>
+            <Tab.Screen name="Score" component={Score} initialParams={{ id }} />
+            <Tab.Screen
+              name="Settings"
+              component={Settings}
+              initialParams={{ id }}
+            />
+          </>
+        )}
+        <Tab.Screen
+          name="Scoresheet"
+          component={Scoresheet}
+          initialParams={{ id }}
+        />
+        <Tab.Screen name="Details" component={Details} initialParams={{ id }} />
+      </Tab.Navigator>
     </>
   )
 }
@@ -1473,11 +1648,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "black",
   },
-  settings: {
+  button_group: {
     display: "flex",
     flexDirection: "row",
-    justifyContent: "space-evenly",
-    gap: 8,
+    justifyContent: "space-around",
     paddingVertical: 20,
     paddingHorizontal: 12,
   },

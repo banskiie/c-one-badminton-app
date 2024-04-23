@@ -57,7 +57,7 @@ export default ({ navigation }: any) => {
           ? query(
               ref,
               where("details.court", "==", currentCourt),
-              where("statuses.current", "!=", "finished"),
+              where("statuses.current", "==", "finished"),
               orderBy("statuses.current", "asc"),
               orderBy("time.start", "desc"),
               orderBy("details.created_date", "asc")
@@ -91,13 +91,6 @@ export default ({ navigation }: any) => {
         <Loading />
       ) : (
         <>
-          <Button
-            onPress={() => navigation.navigate("Add Game")}
-            mode="contained"
-            style={{ margin: 8 }}
-          >
-            Add Game
-          </Button>
           <FlashList
             data={games}
             renderItem={({ item }) => (
