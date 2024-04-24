@@ -6,17 +6,30 @@ import { theme } from "../theme/theme"
 // Game
 import Games from "../tabs/games/Games"
 import ScoreGame from "../tabs/games/ScoreGame"
+import AddGame from "../tabs/games/AddGame"
+import History from "../tabs/games/History"
+import ViewGame from "../tabs/games/ViewGame"
 // Profile
 import Profile from "../tabs/profile/Profile"
 
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
 
+const HistoryStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
+      <Stack.Screen name="History" component={History} />
+    </Stack.Navigator>
+  )
+}
+
 const GameStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
       <Stack.Screen name="Games" component={Games} />
       <Stack.Screen name="Score Game" component={ScoreGame} />
+      <Stack.Screen name="View Game" component={ViewGame} />
+      <Stack.Screen name="Add Game" component={AddGame} />
     </Stack.Navigator>
   )
 }
@@ -26,7 +39,7 @@ export default () => {
     <Tab.Navigator
       screenOptions={{
         headerTitleAlign: "center",
-        tabBarStyle: { height: 40 },
+        tabBarStyle: { height: 50 },
         tabBarShowLabel: false,
         tabBarActiveTintColor: theme.colors.primary,
         headerShown: false,
@@ -40,6 +53,16 @@ export default () => {
           title: "Games",
           tabBarIcon: ({ color, size }) => {
             return <Icon source="badminton" size={size} color={color} />
+          },
+        }}
+      />
+      <Tab.Screen
+        name="History Stack"
+        component={HistoryStack}
+        options={{
+          title: "History",
+          tabBarIcon: ({ color, size }) => {
+            return <Icon source="history" size={25} color={color} />
           },
         }}
       />
