@@ -35,15 +35,15 @@ import StartGame from "../../components/dialogs/StartGame"
 const Tab = createMaterialTopTabNavigator()
 
 const Score = ({ route, navigation }) => {
+  // Loading
+  const [loading, setLoading] = useState<boolean>(false)
+  const [changingSet, setChangingSet] = useState<boolean>(false)
+  // Dialogs
+  const [openStartGame, setOpenStartGame] = useState<boolean>(false)
   const { id } = route.params
   const [data, setData] = useState<any>()
   const [gameRef, setGameRef] = useState<any>()
   const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
-  // Loading
-  const [loading, setLoading] = useState<boolean>(false)
-  const [changingSet, setChangingSet] = useState<boolean>(true)
-  // Dialogs
-  const [openStartGame, setOpenStartGame] = useState<boolean>(false)
 
   // Fetch Game Data
   useEffect(() => {
@@ -57,9 +57,8 @@ const Score = ({ route, navigation }) => {
           } else {
             setHasPlayer2(false)
           }
-          setData(snap)
           setGameRef(ref)
-          setChangingSet(false)
+          setData(snap)
         }
       },
     })
@@ -86,7 +85,7 @@ const Score = ({ route, navigation }) => {
   const switchSide = async () => {
     setLoading(true)
     try {
-      await updateDoc(doc(FIRESTORE_DB, "games", id), {
+      await updateDoc(gameRef, {
         sets: {
           ...data.sets,
           [`set_${data.details.playing_set}`]: {
@@ -310,10 +309,6 @@ const Score = ({ route, navigation }) => {
     } finally {
       setChangingSet(false)
     }
-  }
-
-  if (changingSet) {
-    return <Loading />
   }
 
   return (
@@ -755,15 +750,39 @@ const Score = ({ route, navigation }) => {
 }
 
 const Settings = ({ route, navigation }) => {
-  const { id, data } = route.params
+  const { id } = route.params
+  const [data, setData] = useState<any>()
+  const [gameRef, setGameRef] = useState<any>()
+  const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [openForceWin, setOpenForceWin] = useState<boolean>(false)
   const [openResetSet, setOpenResetSet] = useState<boolean>(false)
 
+  // Fetch Game Data
+  useEffect(() => {
+    const ref = doc(FIRESTORE_DB, "games", id)
+    const sub = onSnapshot(ref, {
+      next: (snapshot) => {
+        if (snapshot.exists()) {
+          const snap = snapshot.data()
+          if (snap.details.category.split(".")[1] === "doubles") {
+            setHasPlayer2(true)
+          } else {
+            setHasPlayer2(false)
+          }
+          setGameRef(ref)
+          setData(snap)
+        }
+      },
+    })
+
+    return () => sub()
+  }, [id])
+
   const switchSide = async () => {
     setLoading(true)
     try {
-      await updateDoc(doc(FIRESTORE_DB, "games", id), {
+      await updateDoc(gameRef, {
         sets: {
           ...data.sets,
           [`set_${data.details.playing_set}`]: {
@@ -782,33 +801,35 @@ const Settings = ({ route, navigation }) => {
   const handleScoreboard = async () => {
     setLoading(true)
     try {
-      await runTransaction(FIRESTORE_DB, async (transaction) => {
-        const snap = await transaction.get(doc(FIRESTORE_DB, "games", id))
-        const game = snap.data()
-        // Game Update
-        transaction.update(doc(FIRESTORE_DB, "games", id), {
-          ...data,
-          statuses: {
-            ...data.statuses,
-            active: !game?.statuses.active,
-          },
-        })
-        // Court Update
-        const courtName = game?.details.court
-        const courtQuery = query(
-          collection(FIRESTORE_DB, "courts"),
-          where("court_name", "==", courtName)
-        )
-        const courtSnapshot = await getDocs(courtQuery)
-        if (!courtSnapshot.empty) {
-          transaction.update(
-            doc(FIRESTORE_DB, "courts", courtSnapshot.docs[0].id),
-            {
-              court_in_use: !game?.statuses.active,
-            }
+      if (gameRef) {
+        await runTransaction(FIRESTORE_DB, async (transaction) => {
+          const snap = await transaction.get(doc(FIRESTORE_DB, "games", id))
+          const game = snap.data()
+          // Game Update
+          transaction.update(doc(FIRESTORE_DB, "games", id), {
+            ...data,
+            statuses: {
+              ...data.statuses,
+              active: !game?.statuses.active,
+            },
+          })
+          // Court Update
+          const courtName = game?.details.court
+          const courtQuery = query(
+            collection(FIRESTORE_DB, "courts"),
+            where("court_name", "==", courtName)
           )
-        }
-      })
+          const courtSnapshot = await getDocs(courtQuery)
+          if (!courtSnapshot.empty) {
+            transaction.update(
+              doc(FIRESTORE_DB, "courts", courtSnapshot.docs[0].id),
+              {
+                court_in_use: !game?.statuses.active,
+              }
+            )
+          }
+        })
+      }
     } catch (error) {
       console.error(error)
     } finally {
@@ -853,7 +874,7 @@ const Settings = ({ route, navigation }) => {
           </Text>
         </>
       </TouchableRipple>
-      {data?.time?.start && (
+      {!!data?.time?.start && (
         <>
           <TouchableRipple
             style={{
@@ -982,8 +1003,30 @@ const Settings = ({ route, navigation }) => {
 }
 
 const Scoresheet = ({ route }) => {
-  const { data, hasPlayer2 } = route.params
+  const { id } = route.params
+  const [data, setData] = useState<any>()
+  const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
   const [scoresheet, setScoresheet] = useState<any[]>([])
+
+  // Fetch Game Data
+  useEffect(() => {
+    const ref = doc(FIRESTORE_DB, "games", id)
+    const sub = onSnapshot(ref, {
+      next: (snapshot) => {
+        if (snapshot.exists()) {
+          const snap = snapshot.data()
+          if (snap.details.category.split(".")[1] === "doubles") {
+            setHasPlayer2(true)
+          } else {
+            setHasPlayer2(false)
+          }
+          setData(snap)
+        }
+      },
+    })
+
+    return () => sub()
+  }, [id])
 
   useEffect(() => {
     if (data?.sets[`set_${data.details.playing_set}`].scoresheet.length > 0) {
@@ -1278,12 +1321,34 @@ const Scoresheet = ({ route }) => {
 }
 
 const Details = ({ route }) => {
-  const { data, hasPlayer2 } = route.params
+  const { id } = route.params
+  const [data, setData] = useState<any>()
+  const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
 
   // Expandables
   const [showDetails, setShowDetails] = useState<boolean>(true)
   const [showPlayers, setShowPlayers] = useState<boolean>(false)
   const [showTimes, setShowTimes] = useState<boolean>(false)
+
+  // Fetch Game Data
+  useEffect(() => {
+    const ref = doc(FIRESTORE_DB, "games", id)
+    const sub = onSnapshot(ref, {
+      next: (snapshot) => {
+        if (snapshot.exists()) {
+          const snap = snapshot.data()
+          if (snap.details.category.split(".")[1] === "doubles") {
+            setHasPlayer2(true)
+          } else {
+            setHasPlayer2(false)
+          }
+          setData(snap)
+        }
+      },
+    })
+
+    return () => sub()
+  }, [id])
 
   return (
     <ScrollView>
@@ -1455,7 +1520,6 @@ export default ({ navigation, route }: any) => {
   const { id } = route.params
   const [loading, setLoading] = useState<boolean>(true)
   const [data, setData] = useState<any>()
-  const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
 
   // Screen Orientation
   useEffect(() => {
@@ -1472,13 +1536,7 @@ export default ({ navigation, route }: any) => {
     const sub = onSnapshot(ref, {
       next: (snapshot) => {
         if (snapshot.exists()) {
-          const snap = snapshot.data()
-          if (snap.details.category.split(".")[1] === "doubles") {
-            setHasPlayer2(true)
-          } else {
-            setHasPlayer2(false)
-          }
-          setData(snap)
+          setData(snapshot.data())
           setLoading(false)
         }
       },
@@ -1522,13 +1580,9 @@ export default ({ navigation, route }: any) => {
         <Tab.Screen
           name="Scoresheet"
           component={Scoresheet}
-          initialParams={{ id, data, hasPlayer2 }}
+          initialParams={{ id }}
         />
-        <Tab.Screen
-          name="Details"
-          component={Details}
-          initialParams={{ id, data, hasPlayer2 }}
-        />
+        <Tab.Screen name="Details" component={Details} initialParams={{ id }} />
       </Tab.Navigator>
     </>
   )

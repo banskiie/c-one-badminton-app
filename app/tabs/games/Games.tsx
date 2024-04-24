@@ -50,40 +50,51 @@ export default ({ navigation }: any) => {
 
   // Fetch All Games (Per Court)
   useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        const ref = collection(FIRESTORE_DB, "games")
-        const q = currentCourt
-          ? query(
-              ref,
-              where("details.court", "==", currentCourt),
-              where("statuses.current", "!=", "finished"),
-              orderBy("statuses.current", "asc"),
-              orderBy("time.start", "desc"),
-              orderBy("details.created_date", "asc")
-            )
-          : query(ref, orderBy("details.created_date", "asc"))
-        onSnapshot(q, {
-          next: (snapshot) => {
-            setGames(
-              snapshot.docs.map((doc: any) => ({
-                id: doc.id,
-                ...doc.data(),
-              }))
-            )
-            setLoading(false)
-          },
-          error: (error: any) => {
-            console.error(error)
-          },
-        })
-      } catch (error: any) {
-        console.error(error)
+    if (currentCourt) {
+      const fetchGames = async () => {
+        try {
+          const ref = collection(FIRESTORE_DB, "games")
+          const q = query(
+            ref,
+            where("details.court", "==", currentCourt),
+            where("statuses.current", "!=", "finished"),
+            orderBy("statuses.current", "asc"),
+            orderBy("time.start", "desc"),
+            orderBy("details.created_date", "asc")
+          )
+          onSnapshot(q, {
+            next: (snapshot) => {
+              setGames(
+                snapshot.docs.map((doc: any) => ({
+                  id: doc.id,
+                  ...doc.data(),
+                }))
+              )
+              setLoading(false)
+            },
+            error: (error: any) => {
+              console.error(error)
+            },
+          })
+        } catch (error: any) {
+          console.error(error)
+        }
       }
-    }
 
-    fetchGames()
+      fetchGames()
+    }
   }, [currentCourt])
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case "upcoming":
+        return "#273B42"
+      case "current":
+        return "green"
+      case "finished":
+        return "blue"
+    }
+  }
 
   return (
     <Animated.View style={{ ...styles.container, opacity: fade }}>
@@ -390,7 +401,7 @@ export default ({ navigation }: any) => {
                     style={{
                       height: "20%",
                       width: "100%",
-                      paddingHorizontal: 5,
+                      paddingTop: 6,
                       flexDirection: "row",
                       justifyContent: "space-between",
                       alignItems: "center",
@@ -399,9 +410,27 @@ export default ({ navigation }: any) => {
                     <Text style={{ textTransform: "uppercase" }}>
                       Best of {item.details.no_of_sets}
                     </Text>
-                    <Text style={{ textTransform: "uppercase" }}>
-                      {item.statuses.current}
-                    </Text>
+                    <View
+                      style={{
+                        backgroundColor: statusColor(item.statuses.current),
+                        padding: 2,
+                        borderRadius: 6,
+                        width: 100,
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          textTransform: "uppercase",
+                          color: "white",
+                          textAlign: "center",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        {item.statuses.current}
+                      </Text>
+                    </View>
                   </View>
                 </>
               </TouchableRipple>

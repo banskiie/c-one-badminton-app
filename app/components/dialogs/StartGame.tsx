@@ -42,7 +42,6 @@ export default ({ open, onClose, id }: DialogProps) => {
         // Set Current Selected Game as Active
         const currentRef = doc(FIRESTORE_DB, "games", id)
         const currentDoc = await getDoc(currentRef)
-        console.log(currentDoc)
         if (currentDoc.exists()) {
           const data = currentDoc.data()
           transaction.update(currentRef, {
