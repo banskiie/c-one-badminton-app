@@ -9,7 +9,7 @@ export default ({ start }) => {
     let interval
     if (start) {
       interval = setInterval(() => {
-        const game = moment(start.toDate())
+        const game = moment(start.seconds * 1000 + start.nanoseconds / 1000000)
         const now = moment()
         const elapsed = moment.duration(now.diff(game))
         setDuration(elapsed)
@@ -23,19 +23,12 @@ export default ({ start }) => {
     <Text variant="displaySmall" style={{ textAlign: "center" }}>
       {`${
         duration.hours() > 0
-          ? duration.hours().toString().padStart(2, "0") + ":"
+          ? duration.hours().toString().padStart(2, "0") + "h"
           : ""
-      }`}
-      {`${
-        duration.minutes() > 0 || duration.hours() > 0
-          ? duration.minutes().toString().padStart(2, "0") + ":"
-          : ""
-      }`}
-      {`${
-        duration.seconds() || duration.minutes() > 0
-          ? duration.seconds().toString().padStart(2, "0")
-          : ""
-      }`}
+      } ${duration.minutes().toString().padStart(2, "0")}m ${duration
+        .seconds()
+        .toString()
+        .padStart(2, "0")}s`}
     </Text>
   )
 }

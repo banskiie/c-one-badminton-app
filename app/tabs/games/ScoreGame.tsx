@@ -372,6 +372,7 @@ const Score = ({ route, navigation }) => {
             {!!(!!data?.time.start && !data?.time.end) && (
               <Timer start={data?.time.start} />
             )}
+
             {/* Team Name and Score */}
             <View
               style={{
