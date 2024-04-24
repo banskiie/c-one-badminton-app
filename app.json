@@ -11,9 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "requireFullScreen": true
@@ -22,8 +20,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "package": "com.ivansinohon.conebadmintonmobile"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,19 +36,9 @@
       [
         "expo-font",
         {
-          "fonts": [
-            "./assets/fonts/Inter.ttf"
-          ]
+          "fonts": ["./assets/fonts/Inter.ttf"]
         }
       ]
-    ],
-    "extra": {
-      "router": {
-        "origin": false
-      },
-      "eas": {
-        "projectId": "058e2063-7bb6-4f08-bb52-d67e7946cea6"
-      }
-    }
+    ]
   }
 }

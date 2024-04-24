@@ -6,31 +6,17 @@ import { theme } from "../theme/theme"
 // Game
 import Games from "../tabs/games/Games"
 import ScoreGame from "../tabs/games/ScoreGame"
-import History from "../tabs/games/History"
 // Profile
 import Profile from "../tabs/profile/Profile"
-import AddGame from "../tabs/games/AddGame"
-import ViewGame from "../tabs/games/ViewGame"
 
 const Tab = createBottomTabNavigator()
 const Stack = createNativeStackNavigator()
-
-const HistoryStack = () => {
-  return (
-    <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
-      <Stack.Screen name="History" component={History} />
-      <Stack.Screen name="View Game" component={ViewGame} />
-    </Stack.Navigator>
-  )
-}
 
 const GameStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
       <Stack.Screen name="Games" component={Games} />
       <Stack.Screen name="Score Game" component={ScoreGame} />
-      <Stack.Screen name="Add Game" component={AddGame} />
-      <Stack.Screen name="View Game" component={ViewGame} />
     </Stack.Navigator>
   )
 }
@@ -40,7 +26,7 @@ export default () => {
     <Tab.Navigator
       screenOptions={{
         headerTitleAlign: "center",
-        tabBarStyle: { height: 60 },
+        tabBarStyle: { height: 40 },
         tabBarShowLabel: false,
         tabBarActiveTintColor: theme.colors.primary,
         headerShown: false,
@@ -53,17 +39,7 @@ export default () => {
         options={{
           title: "Games",
           tabBarIcon: ({ color, size }) => {
-            return <Icon source="badminton" size={25} color={color} />
-          },
-        }}
-      />
-      <Tab.Screen
-        name="History Stack"
-        component={HistoryStack}
-        options={{
-          title: "History",
-          tabBarIcon: ({ color, size }) => {
-            return <Icon source="history" size={25} color={color} />
+            return <Icon source="badminton" size={size} color={color} />
           },
         }}
       />
@@ -73,7 +49,7 @@ export default () => {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => {
-            return <Icon source="account-circle" size={25} color={color} />
+            return <Icon source="account-circle" size={size} color={color} />
           },
           headerShown: true,
         }}
