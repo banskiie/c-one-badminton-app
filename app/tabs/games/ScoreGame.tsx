@@ -914,7 +914,7 @@ const Score = ({ route, navigation }) => {
                         data.sets[`set_${data.details.playing_set}`].winner !==
                           ""
                           ? "#d3d3d3"
-                          : "#ffcc99",
+                          : "#fce5cd",
                       elevation: loading ? 0 : 4,
                     }}
                     disabled={
@@ -947,7 +947,7 @@ const Score = ({ route, navigation }) => {
                           data.sets[`set_${data.details.playing_set}`]
                             .winner !== ""
                             ? "#d3d3d3"
-                            : "#ffcc99",
+                            : "#fce5cd",
                         elevation: loading ? 0 : 4,
                       }}
                       disabled={
@@ -994,7 +994,7 @@ const Score = ({ route, navigation }) => {
                         data.sets[`set_${data.details.playing_set}`].winner !==
                           ""
                           ? "#d3d3d3"
-                          : "#ddf6dd",
+                          : "#E8F4EA",
                       elevation: loading ? 0 : 4,
                     }}
                     disabled={
@@ -1027,7 +1027,7 @@ const Score = ({ route, navigation }) => {
                           data.sets[`set_${data.details.playing_set}`]
                             .winner !== ""
                             ? "#d3d3d3"
-                            : "#ddf6dd",
+                            : "#E8F4EA",
                         elevation: loading ? 0 : 4,
                       }}
                       disabled={
@@ -1467,8 +1467,11 @@ const Settings = ({ route, navigation }) => {
                 </Text>
               </>
             </TouchableRipple>
-            {data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
-              0 && (
+            {!!(
+              data?.sets[`set_${data.details.playing_set}`].winner !== "" ||
+              data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
+                0
+            ) && (
               <TouchableRipple
                 style={{
                   height: 200,
@@ -1508,7 +1511,7 @@ const Settings = ({ route, navigation }) => {
                   borderRadius: 16,
                 }}
                 disabled={loading}
-                onPress={switchSide}
+                onPress={handleForceWin}
               >
                 <>
                   {loading ? (
