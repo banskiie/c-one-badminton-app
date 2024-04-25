@@ -96,6 +96,8 @@ const Score = ({ route, navigation }) => {
       })
     } catch (error: any) {
       console.error(error)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -311,440 +313,734 @@ const Score = ({ route, navigation }) => {
     }
   }
 
+  // return (
+  //   <>
+  //     <Portal>
+  //       <StartGame open={openStartGame} onClose={handleStartGame} id={id} />
+  //     </Portal>
+  //     {!!data?.time.start ? (
+  //       <ScrollView>
+  //         <View style={{ flex: 1, padding: 12, gap: 8 }}>
+  //           {data?.details.no_of_sets > 1 && (
+  //             <Dropdown
+  //               style={styles.dropdown}
+  //               selectedTextStyle={{ textAlign: "center" }}
+  //               placeholderStyle={{ textAlign: "center" }}
+  //               data={Array.from({
+  //                 length:
+  //                   Object.values(data?.sets).filter(
+  //                     (set: any) => set.winner === "a"
+  //                   ).length === 2 ||
+  //                   Object.values(data?.sets).filter(
+  //                     (set: any) => set.winner === "b"
+  //                   ).length === 2
+  //                     ? Object.values(data?.sets).filter(
+  //                         (set: any) => set.winner
+  //                       ).length
+  //                     : Object.values(data?.sets).filter(
+  //                         (set: any) => set.winner
+  //                       ).length + 1,
+  //               }).map((_, index) => ({
+  //                 label: `SET ${index + 1}`,
+  //                 value: index + 1,
+  //               }))}
+  //               value={!changingSet ? data.details.playing_set : ""}
+  //               mode="default"
+  //               labelField="label"
+  //               valueField="value"
+  //               placeholder=""
+  //               onChange={(item: any) => changeSet(item.value)}
+  //             />
+  //           )}
+  //           {!!(
+  //             !!(
+  //               data?.details.no_of_sets === 1 &&
+  //               data.sets[`set_${data.details.playing_set}`].winner
+  //             ) ||
+  //             !!(
+  //               data?.details.no_of_sets === 3 &&
+  //               (Object.values(data.sets).filter(
+  //                 (set: any) => set.winner == "a"
+  //               ).length == 2 ||
+  //                 Object.values(data.sets).filter(
+  //                   (set: any) => set.winner == "b"
+  //                 ).length == 2)
+  //             )
+  //           ) && (
+  //             <Button mode="contained" onPress={finish}>
+  //               Finish
+  //             </Button>
+  //           )}
+  //           {!!(!!data?.time.start && !data?.time.end) && (
+  //             <Timer start={data?.time.start} />
+  //           )}
+
+  //           {/* Team Name and Score */}
+  //           <View
+  //             style={{
+  //               display: "flex",
+  //               flexDirection: data.sets[`set_${data.details.playing_set}`]
+  //                 .switch
+  //                 ? "row-reverse"
+  //                 : "row",
+  //               justifyContent: "space-between",
+  //             }}
+  //           >
+  //             <View
+  //               style={{
+  //                 backgroundColor: "#FAC898",
+  //                 width: "49.5%",
+  //                 display: "flex",
+  //                 alignItems: "center",
+  //                 borderRadius: 8,
+  //               }}
+  //             >
+  //               {data.sets[`set_${data.details.playing_set}`].winner ===
+  //                 "a" && (
+  //                 <Text
+  //                   style={{
+  //                     fontWeight: "bold",
+  //                     textTransform: "uppercase",
+  //                     position: "absolute",
+  //                     marginTop: -24,
+  //                   }}
+  //                 >
+  //                   Winner ♛
+  //                 </Text>
+  //               )}
+  //               <Text>
+  //                 {!!data.players.team_a.team_name
+  //                   ? data.players.team_a.team_name
+  //                   : "Team A"}{" "}
+  //               </Text>
+  //               <Text variant="displayLarge">
+  //                 {data.sets[`set_${data.details.playing_set}`].a_score}
+  //               </Text>
+  //             </View>
+  //             <View
+  //               style={{
+  //                 backgroundColor: "#ddf6dd",
+  //                 width: "49.5%",
+  //                 display: "flex",
+  //                 alignItems: "center",
+  //                 borderRadius: 8,
+  //               }}
+  //             >
+  //               {data.sets[`set_${data.details.playing_set}`].winner ===
+  //                 "b" && (
+  //                 <Text
+  //                   style={{
+  //                     fontWeight: "bold",
+  //                     textTransform: "uppercase",
+  //                     position: "absolute",
+  //                     marginTop: -24,
+  //                   }}
+  //                 >
+  //                   Winner ♛
+  //                 </Text>
+  //               )}
+  //               <Text>
+  //                 {!!data.players.team_b.team_name
+  //                   ? data.players.team_b.team_name
+  //                   : "Team B"}{" "}
+  //               </Text>
+  //               <Text variant="displayLarge">
+  //                 {data.sets[`set_${data.details.playing_set}`].b_score}
+  //               </Text>
+  //             </View>
+  //           </View>
+  //           {/* Players */}
+  //           <View
+  //             style={{
+  //               display: "flex",
+  //               flexDirection: data.sets[`set_${data.details.playing_set}`]
+  //                 .switch
+  //                 ? "row-reverse"
+  //                 : "row",
+  //               justifyContent: "space-between",
+  //             }}
+  //           >
+  //             <View
+  //               style={{
+  //                 backgroundColor: "#FAC898",
+  //                 width: "49.5%",
+  //                 display: "flex",
+  //                 justifyContent: "center",
+  //                 paddingRight: 8,
+  //                 borderRadius: 8,
+  //                 height: 120,
+  //               }}
+  //             >
+  //               <View
+  //                 style={{
+  //                   display: "flex",
+  //                   flexDirection: data.sets[`set_${data.details.playing_set}`]
+  //                     .switch
+  //                     ? "row-reverse"
+  //                     : "row",
+  //                   alignItems: "center",
+  //                   justifyContent: "space-between",
+  //                 }}
+  //               >
+  //                 <View
+  //                   style={{
+  //                     display: "flex",
+  //                     flexDirection: data.sets[
+  //                       `set_${data.details.playing_set}`
+  //                     ].switch
+  //                       ? "row-reverse"
+  //                       : "row",
+  //                     alignItems: "center",
+  //                   }}
+  //                 >
+  //                   <IconButton
+  //                     icon="plus"
+  //                     size={24}
+  //                     mode="contained-tonal"
+  //                     containerColor="#ddf6dd"
+  //                     onPress={() => score("a1")}
+  //                     loading={loading}
+  //                     disabled={
+  //                       loading ||
+  //                       !!data.sets[`set_${data.details.playing_set}`].winner
+  //                     }
+  //                   />
+  //                   <Text
+  //                     style={{
+  //                       fontSize: 30,
+  //                       fontWeight: "bold",
+  //                     }}
+  //                   >
+  //                     {data?.players.team_a.player_1.use_nickname
+  //                       ? data?.players.team_a.player_1.nickname
+  //                       : `${data?.players.team_a.player_1.first_name} ${data?.players.team_a.player_1.last_name}`}
+  //                   </Text>
+  //                 </View>
+  //                 <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+  //                   {
+  //                     data?.sets[
+  //                       `set_${data.details.playing_set}`
+  //                     ].scoresheet.filter(
+  //                       (round: any) => round?.scorer === "a1"
+  //                     ).length
+  //                   }
+  //                 </Text>
+  //               </View>
+  //               {hasPlayer2 && (
+  //                 <View
+  //                   style={{
+  //                     display: "flex",
+  //                     flexDirection: data.sets[
+  //                       `set_${data.details.playing_set}`
+  //                     ].switch
+  //                       ? "row-reverse"
+  //                       : "row",
+  //                     alignItems: "center",
+  //                     justifyContent: "space-between",
+  //                   }}
+  //                 >
+  //                   <View
+  //                     style={{
+  //                       display: "flex",
+  //                       flexDirection: data.sets[
+  //                         `set_${data.details.playing_set}`
+  //                       ].switch
+  //                         ? "row-reverse"
+  //                         : "row",
+  //                       alignItems: "center",
+  //                     }}
+  //                   >
+  //                     <IconButton
+  //                       icon="plus"
+  //                       size={24}
+  //                       mode="contained-tonal"
+  //                       containerColor="#ddf6dd"
+  //                       onPress={() => score("a2")}
+  //                       loading={loading}
+  //                       disabled={
+  //                         loading ||
+  //                         !!data.sets[`set_${data.details.playing_set}`].winner
+  //                       }
+  //                     />
+  //                     <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+  //                       {data?.players.team_a.player_2.use_nickname
+  //                         ? data?.players.team_a.player_2.nickname
+  //                         : `${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
+  //                     </Text>
+  //                   </View>
+  //                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+  //                     {
+  //                       data?.sets[
+  //                         `set_${data.details.playing_set}`
+  //                       ].scoresheet.filter(
+  //                         (round: any) => round?.scorer === "a2"
+  //                       ).length
+  //                     }
+  //                   </Text>
+  //                 </View>
+  //               )}
+  //             </View>
+  //             <View
+  //               style={{
+  //                 backgroundColor: "#ddf6dd",
+  //                 width: "49.5%",
+  //                 display: "flex",
+  //                 justifyContent: "center",
+  //                 paddingRight: 8,
+  //                 borderRadius: 8,
+  //                 height: 120,
+  //               }}
+  //             >
+  //               <View
+  //                 style={{
+  //                   display: "flex",
+  //                   flexDirection: data.sets[`set_${data.details.playing_set}`]
+  //                     .switch
+  //                     ? "row-reverse"
+  //                     : "row",
+  //                   alignItems: "center",
+  //                   justifyContent: "space-between",
+  //                 }}
+  //               >
+  //                 <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+  //                   {
+  //                     data?.sets[
+  //                       `set_${data.details.playing_set}`
+  //                     ].scoresheet.filter(
+  //                       (round: any) => round?.scorer === "b1"
+  //                     ).length
+  //                   }
+  //                 </Text>
+  //                 <View
+  //                   style={{
+  //                     display: "flex",
+  //                     flexDirection: data.sets[
+  //                       `set_${data.details.playing_set}`
+  //                     ].switch
+  //                       ? "row-reverse"
+  //                       : "row",
+  //                     alignItems: "center",
+  //                   }}
+  //                 >
+  //                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+  //                     {data?.players.team_b.player_1.use_nickname
+  //                       ? data?.players.team_b.player_1.nickname
+  //                       : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
+  //                   </Text>
+  //                   <IconButton
+  //                     icon="plus"
+  //                     size={24}
+  //                     mode="contained-tonal"
+  //                     containerColor="#FAC898"
+  //                     onPress={() => score("b1")}
+  //                     loading={loading}
+  //                     disabled={
+  //                       loading ||
+  //                       !!data.sets[`set_${data.details.playing_set}`].winner
+  //                     }
+  //                   />
+  //                 </View>
+  //               </View>
+  //               {hasPlayer2 && (
+  //                 <View
+  //                   style={{
+  //                     display: "flex",
+  //                     flexDirection: data.sets[
+  //                       `set_${data.details.playing_set}`
+  //                     ].switch
+  //                       ? "row-reverse"
+  //                       : "row",
+  //                     alignItems: "center",
+  //                     justifyContent: "space-between",
+  //                   }}
+  //                 >
+  //                   <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+  //                     {
+  //                       data?.sets[
+  //                         `set_${data.details.playing_set}`
+  //                       ].scoresheet.filter(
+  //                         (round: any) => round?.scorer === "b2"
+  //                       ).length
+  //                     }
+  //                   </Text>
+  //                   <View
+  //                     style={{
+  //                       display: "flex",
+  //                       flexDirection: data.sets[
+  //                         `set_${data.details.playing_set}`
+  //                       ].switch
+  //                         ? "row-reverse"
+  //                         : "row",
+  //                       alignItems: "center",
+  //                     }}
+  //                   >
+  //                     <Text style={{ fontSize: 30, fontWeight: "bold" }}>
+  //                       {data?.players.team_b.player_2.use_nickname
+  //                         ? data?.players.team_b.player_2.nickname
+  //                         : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
+  //                     </Text>
+  //                     <IconButton
+  //                       icon="plus"
+  //                       size={24}
+  //                       mode="contained-tonal"
+  //                       containerColor="#FAC898"
+  //                       onPress={() => score("b2")}
+  //                       loading={loading}
+  //                       disabled={
+  //                         loading ||
+  //                         !!data.sets[`set_${data.details.playing_set}`].winner
+  //                       }
+  //                     />
+  //                   </View>
+  //                 </View>
+  //               )}
+  //             </View>
+  //           </View>
+  //           {/* Action Buttons */}
+  //           <View
+  //             style={{
+  //               width: "100%",
+  //               flex: 1,
+  //               flexDirection: "row",
+  //               justifyContent: "space-evenly",
+  //             }}
+  //           >
+  //             {data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
+  //               0 && (
+  //               <>
+  //                 <Button
+  //                   loading={loading}
+  //                   buttonColor="#F7CAC9"
+  //                   style={{ width: "30%" }}
+  //                   mode="contained"
+  //                   icon="undo-variant"
+  //                   textColor="red"
+  //                   onPress={undo}
+  //                   disabled={loading}
+  //                 >
+  //                   Undo Score
+  //                 </Button>
+  //               </>
+  //             )}
+  //           </View>
+  //         </View>
+  //       </ScrollView>
+  //     ) : (
+  //       <View
+  //         style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+  //       >
+  //         <TouchableRipple
+  //           style={{
+  //             ...styles.touch,
+  //             backgroundColor: "#B4D3B2",
+  //           }}
+  //           disabled={loading}
+  //           onPress={handleStartGame}
+  //         >
+  //           <>
+  //             {loading ? (
+  //               <ActivityIndicator color="darkgreen" size={56} />
+  //             ) : (
+  //               <Icon color="darkgreen" source="star" size={56} />
+  //             )}
+  //             <Text style={{ color: "darkgreen" }}>Start</Text>
+  //           </>
+  //         </TouchableRipple>
+  //       </View>
+  //     )}
+  //   </>
+  // )
   return (
     <>
-      <Portal>
-        <StartGame open={openStartGame} onClose={handleStartGame} id={id} />
-      </Portal>
-      {!!data?.time.start ? (
-        <ScrollView>
-          <View style={{ flex: 1, padding: 12, gap: 8 }}>
-            {data?.details.no_of_sets > 1 && (
-              <Dropdown
-                style={styles.dropdown}
-                selectedTextStyle={{ textAlign: "center" }}
-                placeholderStyle={{ textAlign: "center" }}
-                data={Array.from({
-                  length:
-                    Object.values(data?.sets).filter(
-                      (set: any) => set.winner === "a"
-                    ).length === 2 ||
-                    Object.values(data?.sets).filter(
-                      (set: any) => set.winner === "b"
-                    ).length === 2
-                      ? Object.values(data?.sets).filter(
-                          (set: any) => set.winner
-                        ).length
-                      : Object.values(data?.sets).filter(
-                          (set: any) => set.winner
-                        ).length + 1,
-                }).map((_, index) => ({
-                  label: `SET ${index + 1}`,
-                  value: index + 1,
-                }))}
-                value={!changingSet ? data.details.playing_set : ""}
-                mode="default"
-                labelField="label"
-                valueField="value"
-                placeholder=""
-                onChange={(item: any) => changeSet(item.value)}
+      {data && (
+        <>
+          <Portal>
+            <StartGame open={openStartGame} onClose={handleStartGame} id={id} />
+          </Portal>
+          <View
+            style={{
+              height: "100%",
+              width: "100%",
+              flexDirection: data.sets[`set_${data.details.playing_set}`].switch
+                ? "row-reverse"
+                : "row",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            {data?.time.start ? (
+              <View
+                style={{
+                  position: "absolute",
+                  zIndex: 50,
+                  top: 0,
+                  backgroundColor: "white",
+                  alignItems: "center",
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  paddingHorizontal: 2,
+                  paddingVertical: 4,
+                  borderBottomLeftRadius: 16,
+                  borderBottomEndRadius: 16,
+                  elevation: 4,
+                }}
+              >
+                <IconButton
+                  icon="flag-checkered"
+                  iconColor="green"
+                  loading={loading}
+                  disabled={
+                    !(
+                      (data?.details.no_of_sets === 1 &&
+                        data.sets[`set_${data.details.playing_set}`].winner) ||
+                      (data?.details.no_of_sets === 3 &&
+                        (Object.values(data.sets).filter(
+                          (set: any) => set.winner == "a"
+                        ).length == 2 ||
+                          Object.values(data.sets).filter(
+                            (set: any) => set.winner == "b"
+                          ).length == 2))
+                    )
+                  }
+                  onPress={finish}
+                />
+                <Timer start={data?.time.start} />
+                <IconButton
+                  icon="undo-variant"
+                  iconColor="red"
+                  disabled={
+                    data?.sets[`set_${data.details.playing_set}`].scoresheet
+                      .length <= 0
+                  }
+                  loading={loading}
+                  onPress={undo}
+                />
+              </View>
+            ) : (
+              <IconButton
+                style={{
+                  position: "absolute",
+                  zIndex: 50,
+                  backgroundColor: "white",
+                }}
+                icon="play"
+                size={150}
+                animated={true}
+                onPress={handleStartGame}
               />
             )}
-            {!!(
-              !!(
-                data?.details.no_of_sets === 1 &&
-                data.sets[`set_${data.details.playing_set}`].winner
-              ) ||
-              !!(
-                data?.details.no_of_sets === 3 &&
-                (Object.values(data.sets).filter(
-                  (set: any) => set.winner == "a"
-                ).length == 2 ||
-                  Object.values(data.sets).filter(
-                    (set: any) => set.winner == "b"
-                  ).length == 2)
-              )
-            ) && (
-              <Button mode="contained" onPress={finish}>
-                Finish
-              </Button>
-            )}
-            {!!(!!data?.time.start && !data?.time.end) && (
-              <Timer start={data?.time.start} />
-            )}
-
-            {/* Team Name and Score */}
             <View
               style={{
-                display: "flex",
-                flexDirection: data.sets[`set_${data.details.playing_set}`]
-                  .switch
-                  ? "row-reverse"
-                  : "row",
-                justifyContent: "space-between",
+                height: "100%",
+                width: "50%",
+                backgroundColor: "#FAC898",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: -15,
+                paddingBottom: 40,
               }}
             >
-              <View
-                style={{
-                  backgroundColor: "#FAC898",
-                  width: "49.5%",
-                  display: "flex",
-                  alignItems: "center",
-                  borderRadius: 8,
-                }}
-              >
-                {data.sets[`set_${data.details.playing_set}`].winner ===
-                  "a" && (
-                  <Text
-                    style={{
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      position: "absolute",
-                      marginTop: -24,
-                    }}
-                  >
-                    Winner ♛
-                  </Text>
-                )}
-                <Text>
-                  {!!data.players.team_a.team_name
-                    ? data.players.team_a.team_name
-                    : "Team A"}{" "}
-                </Text>
-                <Text variant="displayLarge">
-                  {data.sets[`set_${data.details.playing_set}`].a_score}
-                </Text>
-              </View>
-              <View
-                style={{
-                  backgroundColor: "#ddf6dd",
-                  width: "49.5%",
-                  display: "flex",
-                  alignItems: "center",
-                  borderRadius: 8,
-                }}
-              >
-                {data.sets[`set_${data.details.playing_set}`].winner ===
-                  "b" && (
-                  <Text
-                    style={{
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                      position: "absolute",
-                      marginTop: -24,
-                    }}
-                  >
-                    Winner ♛
-                  </Text>
-                )}
-                <Text>
-                  {!!data.players.team_b.team_name
-                    ? data.players.team_b.team_name
-                    : "Team B"}{" "}
-                </Text>
-                <Text variant="displayLarge">
-                  {data.sets[`set_${data.details.playing_set}`].b_score}
-                </Text>
-              </View>
+              <Text style={{ fontSize: 32 }}>
+                {!!data?.players.team_a.team_name
+                  ? data?.players.team_a.team_name
+                  : "Team A"}
+              </Text>
+              <Text style={{ fontSize: 105, fontWeight: "bold" }}>
+                {data.sets[`set_${data.details.playing_set}`].a_score}
+              </Text>
             </View>
-            {/* Players */}
             <View
               style={{
-                display: "flex",
-                flexDirection: data.sets[`set_${data.details.playing_set}`]
-                  .switch
-                  ? "row-reverse"
-                  : "row",
-                justifyContent: "space-between",
+                height: "100%",
+                width: "50%",
+                backgroundColor: "#ddf6dd",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: -15,
+                paddingBottom: 40,
               }}
             >
+              <Text style={{ fontSize: 32 }}>
+                {!!data?.players.team_b.team_name
+                  ? data?.players.team_b.team_name
+                  : "Team B"}
+              </Text>
+              <Text style={{ fontSize: 105, fontWeight: "bold" }}>
+                {data.sets[`set_${data.details.playing_set}`].b_score}
+              </Text>
+            </View>
+            {data?.time.start && (
               <View
                 style={{
-                  backgroundColor: "#FAC898",
-                  width: "49.5%",
-                  display: "flex",
-                  justifyContent: "center",
-                  paddingRight: 8,
-                  borderRadius: 8,
-                  height: 120,
+                  position: "absolute",
+                  bottom: 0,
+                  width: "100%",
+                  backgroundColor: "white",
+                  height: 80,
+                  flexDirection: data.sets[`set_${data.details.playing_set}`]
+                    .switch
+                    ? "row-reverse"
+                    : "row",
                 }}
               >
                 <View
                   style={{
-                    display: "flex",
-                    flexDirection: data.sets[`set_${data.details.playing_set}`]
-                      .switch
-                      ? "row-reverse"
-                      : "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
+                    width: "50%",
+                    flexDirection: "row",
+                    justifyContent: "space-evenly",
+                    paddingTop: 8,
+                    paddingLeft: 5,
+                    paddingRight: 2.5,
+                    gap: 5,
                   }}
                 >
-                  <View
+                  <TouchableRipple
                     style={{
-                      display: "flex",
-                      flexDirection: data.sets[
-                        `set_${data.details.playing_set}`
-                      ].switch
-                        ? "row-reverse"
-                        : "row",
                       alignItems: "center",
+                      justifyContent: "center",
+                      width: hasPlayer2 ? "49%" : "98%",
+                      borderTopLeftRadius: 16,
+                      borderTopEndRadius: 16,
+                      backgroundColor: loading ? "#d3d3d3" : "#ffcc99",
+                      elevation: 4,
                     }}
-                  >
-                    <IconButton
-                      icon="plus"
-                      size={24}
-                      mode="contained-tonal"
-                      containerColor="#ddf6dd"
-                      onPress={() => score("a1")}
-                      loading={loading}
-                      disabled={
-                        loading ||
-                        !!data.sets[`set_${data.details.playing_set}`].winner
-                      }
-                    />
-                    <Text
-                      style={{
-                        fontSize: 30,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {data?.players.team_a.player_1.use_nickname
-                        ? data?.players.team_a.player_1.nickname
-                        : `${data?.players.team_a.player_1.first_name} ${data?.players.team_a.player_1.last_name}`}
-                    </Text>
-                  </View>
-                  <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                    {
-                      data?.sets[
-                        `set_${data.details.playing_set}`
-                      ].scoresheet.filter(
-                        (round: any) => round?.scorer === "a1"
-                      ).length
-                    }
-                  </Text>
-                </View>
-                {hasPlayer2 && (
-                  <View
-                    style={{
-                      display: "flex",
-                      flexDirection: data.sets[
-                        `set_${data.details.playing_set}`
-                      ].switch
-                        ? "row-reverse"
-                        : "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <View
-                      style={{
-                        display: "flex",
-                        flexDirection: data.sets[
-                          `set_${data.details.playing_set}`
-                        ].switch
-                          ? "row-reverse"
-                          : "row",
-                        alignItems: "center",
-                      }}
-                    >
-                      <IconButton
-                        icon="plus"
-                        size={24}
-                        mode="contained-tonal"
-                        containerColor="#ddf6dd"
-                        onPress={() => score("a2")}
-                        loading={loading}
-                        disabled={
-                          loading ||
-                          !!data.sets[`set_${data.details.playing_set}`].winner
-                        }
-                      />
-                      <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                        {data?.players.team_a.player_2.use_nickname
-                          ? data?.players.team_a.player_2.nickname
-                          : `${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
-                      </Text>
-                    </View>
-                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                      {
-                        data?.sets[
-                          `set_${data.details.playing_set}`
-                        ].scoresheet.filter(
-                          (round: any) => round?.scorer === "a2"
-                        ).length
-                      }
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <View
-                style={{
-                  backgroundColor: "#ddf6dd",
-                  width: "49.5%",
-                  display: "flex",
-                  justifyContent: "center",
-                  paddingRight: 8,
-                  borderRadius: 8,
-                  height: 120,
-                }}
-              >
-                <View
-                  style={{
-                    display: "flex",
-                    flexDirection: data.sets[`set_${data.details.playing_set}`]
-                      .switch
-                      ? "row-reverse"
-                      : "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                    {
-                      data?.sets[
-                        `set_${data.details.playing_set}`
-                      ].scoresheet.filter(
-                        (round: any) => round?.scorer === "b1"
-                      ).length
-                    }
-                  </Text>
-                  <View
-                    style={{
-                      display: "flex",
-                      flexDirection: data.sets[
-                        `set_${data.details.playing_set}`
-                      ].switch
-                        ? "row-reverse"
-                        : "row",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                      {data?.players.team_b.player_1.use_nickname
-                        ? data?.players.team_b.player_1.nickname
-                        : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
-                    </Text>
-                    <IconButton
-                      icon="plus"
-                      size={24}
-                      mode="contained-tonal"
-                      containerColor="#FAC898"
-                      onPress={() => score("b1")}
-                      loading={loading}
-                      disabled={
-                        loading ||
-                        !!data.sets[`set_${data.details.playing_set}`].winner
-                      }
-                    />
-                  </View>
-                </View>
-                {hasPlayer2 && (
-                  <View
-                    style={{
-                      display: "flex",
-                      flexDirection: data.sets[
-                        `set_${data.details.playing_set}`
-                      ].switch
-                        ? "row-reverse"
-                        : "row",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                      {
-                        data?.sets[
-                          `set_${data.details.playing_set}`
-                        ].scoresheet.filter(
-                          (round: any) => round?.scorer === "b2"
-                        ).length
-                      }
-                    </Text>
-                    <View
-                      style={{
-                        display: "flex",
-                        flexDirection: data.sets[
-                          `set_${data.details.playing_set}`
-                        ].switch
-                          ? "row-reverse"
-                          : "row",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Text style={{ fontSize: 30, fontWeight: "bold" }}>
-                        {data?.players.team_b.player_2.use_nickname
-                          ? data?.players.team_b.player_2.nickname
-                          : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
-                      </Text>
-                      <IconButton
-                        icon="plus"
-                        size={24}
-                        mode="contained-tonal"
-                        containerColor="#FAC898"
-                        onPress={() => score("b2")}
-                        loading={loading}
-                        disabled={
-                          loading ||
-                          !!data.sets[`set_${data.details.playing_set}`].winner
-                        }
-                      />
-                    </View>
-                  </View>
-                )}
-              </View>
-            </View>
-            {/* Action Buttons */}
-            <View
-              style={{
-                width: "100%",
-                flex: 1,
-                flexDirection: "row",
-                justifyContent: "space-evenly",
-              }}
-            >
-              {data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
-                0 && (
-                <>
-                  <Button
-                    loading={loading}
-                    buttonColor="#F7CAC9"
-                    style={{ width: "30%" }}
-                    mode="contained"
-                    icon="undo-variant"
-                    textColor="red"
-                    onPress={undo}
                     disabled={loading}
+                    onPress={() => score("a1")}
                   >
-                    Undo Score
-                  </Button>
-                </>
-              )}
+                    {loading ? (
+                      <ActivityIndicator />
+                    ) : (
+                      <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                        +{" "}
+                        {data?.players.team_a.player_1.use_nickname
+                          ? data?.players.team_a.player_1.nickname
+                          : `${data?.players.team_a.player_1.first_name} ${data?.players.team_a.player_1.last_name}`}
+                      </Text>
+                    )}
+                  </TouchableRipple>
+                  {hasPlayer2 && (
+                    <TouchableRipple
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "49%",
+                        borderTopLeftRadius: 16,
+                        borderTopEndRadius: 16,
+                        backgroundColor: loading ? "#d3d3d3" : "#ffcc99",
+                        elevation: 4,
+                      }}
+                      disabled={loading}
+                      onPress={() => score("a2")}
+                    >
+                      {loading ? (
+                        <ActivityIndicator />
+                      ) : (
+                        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                          +{" "}
+                          {data?.players.team_a.player_2.use_nickname
+                            ? data?.players.team_a.player_2.nickname
+                            : `${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
+                        </Text>
+                      )}
+                    </TouchableRipple>
+                  )}
+                </View>
+                <View
+                  style={{
+                    width: "50%",
+                    flexDirection: "row",
+                    justifyContent: "space-evenly",
+                    paddingTop: 8,
+                    paddingRight: 5,
+                    paddingLeft: 2.5,
+                    gap: 5,
+                    elevation: 4,
+                  }}
+                >
+                  <TouchableRipple
+                    style={{
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: hasPlayer2 ? "49%" : "98%",
+                      borderTopLeftRadius: 16,
+                      borderTopEndRadius: 16,
+                      backgroundColor: loading ? "#d3d3d3" : "#ddf6dd",
+                      elevation: 4,
+                    }}
+                    disabled={loading}
+                    onPress={() => score("b1")}
+                  >
+                    {loading ? (
+                      <ActivityIndicator />
+                    ) : (
+                      <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                        +{" "}
+                        {data?.players.team_b.player_1.use_nickname
+                          ? data?.players.team_b.player_1.nickname
+                          : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
+                      </Text>
+                    )}
+                  </TouchableRipple>
+                  {hasPlayer2 && (
+                    <TouchableRipple
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "49%",
+                        borderTopLeftRadius: 16,
+                        borderTopEndRadius: 16,
+                        backgroundColor: loading ? "#d3d3d3" : "#ddf6dd",
+                        elevation: 4,
+                      }}
+                      disabled={loading}
+                      onPress={() => score("b2")}
+                    >
+                      {loading ? (
+                        <ActivityIndicator />
+                      ) : (
+                        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                          +{" "}
+                          {data?.players.team_b.player_2.use_nickname
+                            ? data?.players.team_b.player_2.nickname
+                            : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
+                        </Text>
+                      )}
+                    </TouchableRipple>
+                  )}
+                </View>
+              </View>
+            )}
+            <View
+              style={{
+                position: "absolute",
+                top: "18%",
+                backgroundColor: "white",
+                flexDirection: data.sets[`set_${data.details.playing_set}`]
+                  .switch
+                  ? "row-reverse"
+                  : "row",
+                paddingHorizontal: 15,
+                borderRadius: 16,
+                gap: 32,
+              }}
+            >
+              <Text style={{ fontSize: 38, fontWeight: "bold" }}>
+                {
+                  Object.values(data?.sets).filter(
+                    (set: any) => set.winner === "a"
+                  ).length
+                }
+              </Text>
+              <Text style={{ fontSize: 38, fontWeight: "bold" }}>
+                {
+                  Object.values(data?.sets).filter(
+                    (set: any) => set.winner === "b"
+                  ).length
+                }
+              </Text>
             </View>
           </View>
-        </ScrollView>
-      ) : (
-        <View
-          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
-        >
-          <TouchableRipple
-            style={{
-              ...styles.touch,
-              backgroundColor: "#B4D3B2",
-            }}
-            disabled={loading}
-            onPress={handleStartGame}
-          >
-            <>
-              {loading ? (
-                <ActivityIndicator color="darkgreen" size={56} />
-              ) : (
-                <Icon color="darkgreen" source="star" size={56} />
-              )}
-              <Text style={{ color: "darkgreen" }}>Start</Text>
-            </>
-          </TouchableRipple>
-        </View>
+        </>
       )}
     </>
   )
@@ -754,7 +1050,6 @@ const Settings = ({ route, navigation }) => {
   const { id } = route.params
   const [data, setData] = useState<any>()
   const [gameRef, setGameRef] = useState<any>()
-  const [hasPlayer2, setHasPlayer2] = useState<boolean>(false)
   const [loading, setLoading] = useState<boolean>(false)
   const [openForceWin, setOpenForceWin] = useState<boolean>(false)
   const [openResetSet, setOpenResetSet] = useState<boolean>(false)
@@ -766,11 +1061,6 @@ const Settings = ({ route, navigation }) => {
       next: (snapshot) => {
         if (snapshot.exists()) {
           const snap = snapshot.data()
-          if (snap.details.category.split(".")[1] === "doubles") {
-            setHasPlayer2(true)
-          } else {
-            setHasPlayer2(false)
-          }
           setGameRef(ref)
           setData(snap)
         }
@@ -1555,7 +1845,9 @@ export default ({ navigation, route }: any) => {
         }) ${
           data.details.game_no && " | " + data.details.game_no
         }`.toUpperCase(),
-        headerShown: true,
+        tabBarStyle: {
+          display: "none",
+        },
       })
     }
   }, [data])

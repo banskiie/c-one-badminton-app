@@ -1,3 +1,4 @@
+import React, { useEffect } from "react"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import { Icon } from "react-native-paper"
@@ -19,6 +20,7 @@ const HistoryStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
       <Stack.Screen name="History" component={History} />
+      <Stack.Screen name="View Game" component={ViewGame} />
     </Stack.Navigator>
   )
 }
@@ -28,7 +30,6 @@ const GameStack = () => {
     <Stack.Navigator screenOptions={{ headerTitleAlign: "center" }}>
       <Stack.Screen name="Games" component={Games} />
       <Stack.Screen name="Score Game" component={ScoreGame} />
-      <Stack.Screen name="View Game" component={ViewGame} />
       <Stack.Screen name="Add Game" component={AddGame} />
     </Stack.Navigator>
   )
@@ -50,6 +51,9 @@ export default () => {
         name="Game Stack"
         component={GameStack}
         options={{
+          // tabBarStyle: {
+          //   display: "none",
+          // },
           title: "Games",
           tabBarIcon: ({ color, size }) => {
             return <Icon source="badminton" size={size} color={color} />

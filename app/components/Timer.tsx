@@ -20,7 +20,14 @@ export default ({ start }) => {
   }, [start])
 
   return (
-    <Text variant="displaySmall" style={{ textAlign: "center" }}>
+    <Text
+      style={{
+        textAlign: "center",
+        fontWeight: "bold",
+        fontSize: 24,
+        paddingRight: 5,
+      }}
+    >
       {`${
         duration.hours() > 0
           ? duration.hours().toString().padStart(2, "0") + "h"
