@@ -782,7 +782,7 @@ const Score = ({ route, navigation }) => {
                   paddingVertical: 4,
                   borderBottomLeftRadius: 16,
                   borderBottomEndRadius: 16,
-                  elevation: 4,
+                  elevation: loading ? 0 : 4,
                 }}
               >
                 <IconButton
@@ -841,6 +841,10 @@ const Score = ({ route, navigation }) => {
               }}
             >
               <Text style={{ fontSize: 32 }}>
+                <Text>
+                  {data.sets[`set_${data.details.playing_set}`].winner == "a" &&
+                    "👑"}
+                </Text>
                 {!!data?.players.team_a.team_name
                   ? data?.players.team_a.team_name
                   : "Team A"}
@@ -861,6 +865,10 @@ const Score = ({ route, navigation }) => {
               }}
             >
               <Text style={{ fontSize: 32 }}>
+                <Text>
+                  {data.sets[`set_${data.details.playing_set}`].winner == "b" &&
+                    "👑"}
+                </Text>
                 {!!data?.players.team_b.team_name
                   ? data?.players.team_b.team_name
                   : "Team B"}
@@ -901,10 +909,18 @@ const Score = ({ route, navigation }) => {
                       width: hasPlayer2 ? "49%" : "98%",
                       borderTopLeftRadius: 16,
                       borderTopEndRadius: 16,
-                      backgroundColor: loading ? "#d3d3d3" : "#ffcc99",
-                      elevation: 4,
+                      backgroundColor:
+                        loading ||
+                        data.sets[`set_${data.details.playing_set}`].winner !==
+                          ""
+                          ? "#d3d3d3"
+                          : "#ffcc99",
+                      elevation: loading ? 0 : 4,
                     }}
-                    disabled={loading}
+                    disabled={
+                      loading ||
+                      data.sets[`set_${data.details.playing_set}`].winner !== ""
+                    }
                     onPress={() => score("a1")}
                   >
                     {loading ? (
@@ -926,10 +942,19 @@ const Score = ({ route, navigation }) => {
                         width: "49%",
                         borderTopLeftRadius: 16,
                         borderTopEndRadius: 16,
-                        backgroundColor: loading ? "#d3d3d3" : "#ffcc99",
-                        elevation: 4,
+                        backgroundColor:
+                          loading ||
+                          data.sets[`set_${data.details.playing_set}`]
+                            .winner !== ""
+                            ? "#d3d3d3"
+                            : "#ffcc99",
+                        elevation: loading ? 0 : 4,
                       }}
-                      disabled={loading}
+                      disabled={
+                        loading ||
+                        data.sets[`set_${data.details.playing_set}`].winner !==
+                          ""
+                      }
                       onPress={() => score("a2")}
                     >
                       {loading ? (
@@ -954,7 +979,7 @@ const Score = ({ route, navigation }) => {
                     paddingRight: 5,
                     paddingLeft: 2.5,
                     gap: 5,
-                    elevation: 4,
+                    elevation: loading ? 0 : 4,
                   }}
                 >
                   <TouchableRipple
@@ -964,10 +989,18 @@ const Score = ({ route, navigation }) => {
                       width: hasPlayer2 ? "49%" : "98%",
                       borderTopLeftRadius: 16,
                       borderTopEndRadius: 16,
-                      backgroundColor: loading ? "#d3d3d3" : "#ddf6dd",
-                      elevation: 4,
+                      backgroundColor:
+                        loading ||
+                        data.sets[`set_${data.details.playing_set}`].winner !==
+                          ""
+                          ? "#d3d3d3"
+                          : "#ddf6dd",
+                      elevation: loading ? 0 : 4,
                     }}
-                    disabled={loading}
+                    disabled={
+                      loading ||
+                      data.sets[`set_${data.details.playing_set}`].winner !== ""
+                    }
                     onPress={() => score("b1")}
                   >
                     {loading ? (
@@ -989,10 +1022,19 @@ const Score = ({ route, navigation }) => {
                         width: "49%",
                         borderTopLeftRadius: 16,
                         borderTopEndRadius: 16,
-                        backgroundColor: loading ? "#d3d3d3" : "#ddf6dd",
-                        elevation: 4,
+                        backgroundColor:
+                          loading ||
+                          data.sets[`set_${data.details.playing_set}`]
+                            .winner !== ""
+                            ? "#d3d3d3"
+                            : "#ddf6dd",
+                        elevation: loading ? 0 : 4,
                       }}
-                      disabled={loading}
+                      disabled={
+                        loading ||
+                        data.sets[`set_${data.details.playing_set}`].winner !==
+                          ""
+                      }
                       onPress={() => score("b2")}
                     >
                       {loading ? (
@@ -1013,7 +1055,7 @@ const Score = ({ route, navigation }) => {
             <View
               style={{
                 position: "absolute",
-                top: "18%",
+                top: data?.time.start ? "18%" : 0,
                 backgroundColor: "white",
                 flexDirection: data.sets[`set_${data.details.playing_set}`]
                   .switch
@@ -1136,160 +1178,354 @@ const Settings = ({ route, navigation }) => {
     setOpenResetSet((prev: boolean) => !prev)
   }
 
+  // return (
+  //   <View style={styles.settings}>
+  //     <Portal>
+  //       <ForceWin open={openForceWin} onClose={handleForceWin} id={id} />
+  //       <ResetSet open={openResetSet} onClose={handleResetSet} id={id} />
+  //     </Portal>
+  //     <TouchableRipple
+  //       style={{
+  //         ...styles.touch,
+  //         backgroundColor: data?.statuses.active ? "#AEC6CF" : "#91B2BE",
+  //       }}
+  //       disabled={loading}
+  //       onPress={handleScoreboard}
+  //     >
+  //       <>
+  //         {loading ? (
+  //           <ActivityIndicator size={56} color="#273B42" />
+  //         ) : (
+  //           <Icon
+  //             source={data?.statuses.active ? "eye" : "eye-outline"}
+  //             size={56}
+  //             color="#273B42"
+  //           />
+  //         )}
+  //         <Text variant="labelLarge" style={{ color: "#273B42" }}>
+  //           {data?.statuses.active ? "Hide" : "Show"} Scoreboard
+  //         </Text>
+  //       </>
+  //     </TouchableRipple>
+  //     {data?.time?.start && (
+  //       <>
+  //         <TouchableRipple
+  //           style={{
+  //             ...styles.touch,
+  //             backgroundColor: "#D7CFC7",
+  //           }}
+  //           disabled={loading}
+  //           onPress={switchSide}
+  //         >
+  //           <>
+  //             {loading ? (
+  //               <ActivityIndicator color="black" size={56} />
+  //             ) : (
+  //               <View
+  //                 style={{
+  //                   width: "100%",
+  //                   flexDirection: "row",
+  //                   alignItems: "center",
+  //                   justifyContent: "center",
+  //                 }}
+  //               >
+  //                 <Text
+  //                   variant="displaySmall"
+  //                   style={{
+  //                     color: data?.sets[`set_${data.details.playing_set}`]
+  //                       .switch
+  //                       ? "darkgreen"
+  //                       : "#FF8C00",
+  //                     fontWeight: "bold",
+  //                   }}
+  //                 >
+  //                   {data?.sets[`set_${data.details.playing_set}`].switch
+  //                     ? "B"
+  //                     : "A"}
+  //                 </Text>
+  //                 <Icon color="black" source="swap-horizontal" size={56} />
+  //                 <Text
+  //                   variant="displaySmall"
+  //                   style={{
+  //                     color: data?.sets[`set_${data.details.playing_set}`]
+  //                       .switch
+  //                       ? "#FF8C00"
+  //                       : "darkgreen",
+  //                     fontWeight: "bold",
+  //                   }}
+  //                 >
+  //                   {data?.sets[`set_${data.details.playing_set}`].switch
+  //                     ? "A"
+  //                     : "B"}
+  //                 </Text>
+  //               </View>
+  //             )}
+  //             <Text variant="labelLarge" style={{ color: "black" }}>
+  //               Switch Team Sides
+  //             </Text>
+  //           </>
+  //         </TouchableRipple>
+  //         {!!(
+  //           data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
+  //             0 || data?.sets[`set_${data.details.playing_set}`].winner
+  //         ) && (
+  //           <TouchableRipple
+  //             style={{
+  //               ...styles.touch,
+  //               backgroundColor: "pink",
+  //             }}
+  //             disabled={loading}
+  //             onPress={handleResetSet}
+  //           >
+  //             <>
+  //               {loading ? (
+  //                 <ActivityIndicator color="red" size={56} />
+  //               ) : (
+  //                 <Icon color="red" source="restore-alert" size={56} />
+  //               )}
+  //               <Text variant="labelLarge" style={{ color: "red" }}>
+  //                 Reset Set
+  //               </Text>
+  //             </>
+  //           </TouchableRipple>
+  //         )}
+  //         {!data?.sets[`set_${data.details.playing_set}`].winner && (
+  //           <TouchableRipple
+  //             style={{
+  //               ...styles.touch,
+  //               backgroundColor: "#B4D3B2",
+  //             }}
+  //             disabled={loading}
+  //             onPress={handleForceWin}
+  //           >
+  //             <>
+  //               {loading ? (
+  //                 <ActivityIndicator color="darkgreen" size={56} />
+  //               ) : (
+  //                 <Icon color="darkgreen" source="star" size={56} />
+  //               )}
+  //               <Text variant="labelLarge" style={{ color: "darkgreen" }}>
+  //                 Force Win Set
+  //               </Text>
+  //             </>
+  //           </TouchableRipple>
+  //         )}
+  //       </>
+  //     )}
+  //     <TouchableRipple
+  //       style={{
+  //         ...styles.touch,
+  //         backgroundColor: "#fff192",
+  //       }}
+  //       disabled={loading}
+  //       onPress={() => {
+  //         navigation.navigate("Add Game", { data, id })
+  //       }}
+  //     >
+  //       <>
+  //         {loading ? (
+  //           <ActivityIndicator color="#8B8000" size={56} />
+  //         ) : (
+  //           <Icon color="#8B8000" source="clipboard-edit-outline" size={56} />
+  //         )}
+  //         <Text style={{ color: "#8B8000" }}>Edit Game</Text>
+  //       </>
+  //     </TouchableRipple>
+  //   </View>
+  // )
   return (
-    <View style={styles.settings}>
+    <>
       <Portal>
         <ForceWin open={openForceWin} onClose={handleForceWin} id={id} />
         <ResetSet open={openResetSet} onClose={handleResetSet} id={id} />
       </Portal>
-      <TouchableRipple
+      <View
         style={{
-          ...styles.touch,
-          backgroundColor: data?.statuses.active ? "#AEC6CF" : "#91B2BE",
+          width: "100%",
+          flexDirection: "row",
+          justifyContent: "space-evenly",
+          gap: 2,
+          paddingVertical: 24,
+          paddingHorizontal: 12,
         }}
-        disabled={loading}
-        onPress={handleScoreboard}
       >
-        <>
-          {loading ? (
-            <ActivityIndicator size={56} color="#273B42" />
-          ) : (
-            <Icon
-              source={data?.statuses.active ? "eye" : "eye-outline"}
-              size={56}
-              color="#273B42"
-            />
-          )}
-          <Text variant="labelLarge" style={{ color: "#273B42" }}>
-            {data?.statuses.active ? "Hide" : "Show"} Scoreboard
-          </Text>
-        </>
-      </TouchableRipple>
-      {!!data?.time?.start && (
-        <>
-          <TouchableRipple
-            style={{
-              ...styles.touch,
-              backgroundColor: "#D7CFC7",
-            }}
-            disabled={loading}
-            onPress={switchSide}
-          >
-            <>
-              {loading ? (
-                <ActivityIndicator color="black" size={56} />
-              ) : (
-                <View
-                  style={{
-                    width: "100%",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text
-                    variant="displaySmall"
-                    style={{
-                      color: data?.sets[`set_${data.details.playing_set}`]
-                        .switch
-                        ? "darkgreen"
-                        : "#FF8C00",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {data?.sets[`set_${data.details.playing_set}`].switch
-                      ? "B"
-                      : "A"}
-                  </Text>
-                  <Icon color="black" source="swap-horizontal" size={56} />
-                  <Text
-                    variant="displaySmall"
-                    style={{
-                      color: data?.sets[`set_${data.details.playing_set}`]
-                        .switch
-                        ? "#FF8C00"
-                        : "darkgreen",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {data?.sets[`set_${data.details.playing_set}`].switch
-                      ? "A"
-                      : "B"}
-                  </Text>
-                </View>
-              )}
-              <Text variant="labelLarge" style={{ color: "black" }}>
-                Switch Team Sides
-              </Text>
-            </>
-          </TouchableRipple>
-          {!!(
-            data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
-              0 || data?.sets[`set_${data.details.playing_set}`].winner
-          ) && (
+        <TouchableRipple
+          style={{
+            height: 200,
+            gap: 3,
+            width: "15%",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#D6E2E7",
+            elevation: loading ? 0 : 4,
+            borderRadius: 16,
+          }}
+          disabled={loading}
+          onPress={handleScoreboard}
+        >
+          <>
+            {loading ? (
+              <ActivityIndicator size={56} />
+            ) : (
+              <Icon
+                source={data?.statuses.active ? "eye" : "eye-outline"}
+                size={56}
+                color="#273B42"
+              />
+            )}
+            <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+              {data?.statuses.active ? "Hide" : "Show"} Scoreboard
+            </Text>
+          </>
+        </TouchableRipple>
+        <TouchableRipple
+          style={{
+            height: 200,
+            gap: 3,
+            width: "15%",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#C6CFAE",
+            elevation: loading ? 0 : 4,
+            borderRadius: 16,
+          }}
+          disabled={loading}
+          onPress={() => {
+            navigation.navigate("Add Game", { data, id })
+          }}
+        >
+          <>
+            {loading ? (
+              <ActivityIndicator size={56} />
+            ) : (
+              <Icon source="clipboard-edit-outline" size={56} color="#273B42" />
+            )}
+            <Text style={{ fontSize: 18, fontWeight: "bold" }}>Edit Game</Text>
+          </>
+        </TouchableRipple>
+        {data?.time.start && (
+          <>
             <TouchableRipple
               style={{
-                ...styles.touch,
-                backgroundColor: "pink",
+                height: 200,
+                gap: 3,
+                width: "15%",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#CAB3E5",
+                elevation: loading ? 0 : 4,
+                borderRadius: 16,
               }}
               disabled={loading}
-              onPress={handleResetSet}
+              onPress={switchSide}
             >
               <>
                 {loading ? (
-                  <ActivityIndicator color="red" size={56} />
+                  <ActivityIndicator size={56} />
                 ) : (
-                  <Icon color="red" source="restore-alert" size={56} />
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 3,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 40,
+                        fontWeight: "bold",
+                        color: data?.sets[`set_${data.details.playing_set}`]
+                          .switch
+                          ? "#FF8C00"
+                          : "darkgreen",
+                      }}
+                    >
+                      {data?.sets[`set_${data.details.playing_set}`].switch
+                        ? "B"
+                        : "A"}
+                    </Text>
+                    <Icon source="swap-horizontal" size={56} color="#273B42" />
+                    <Text
+                      style={{
+                        fontSize: 40,
+                        fontWeight: "bold",
+
+                        color: data?.sets[`set_${data.details.playing_set}`]
+                          .switch
+                          ? "darkgreen"
+                          : "#FF8C00",
+                      }}
+                    >
+                      {data?.sets[`set_${data.details.playing_set}`].switch
+                        ? "A"
+                        : "B"}
+                    </Text>
+                  </View>
                 )}
-                <Text variant="labelLarge" style={{ color: "red" }}>
-                  Reset Set
+                <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                  Switch Sides
                 </Text>
               </>
             </TouchableRipple>
-          )}
-          {!data?.sets[`set_${data.details.playing_set}`].winner && (
-            <TouchableRipple
-              style={{
-                ...styles.touch,
-                backgroundColor: "#B4D3B2",
-              }}
-              disabled={loading}
-              onPress={handleForceWin}
-            >
-              <>
-                {loading ? (
-                  <ActivityIndicator color="darkgreen" size={56} />
-                ) : (
-                  <Icon color="darkgreen" source="star" size={56} />
-                )}
-                <Text variant="labelLarge" style={{ color: "darkgreen" }}>
-                  Force Win Set
-                </Text>
-              </>
-            </TouchableRipple>
-          )}
-        </>
-      )}
-      <TouchableRipple
-        style={{
-          ...styles.touch,
-          backgroundColor: "#fff192",
-        }}
-        disabled={loading}
-        onPress={() => {
-          navigation.navigate("Add Game", { data, id })
-        }}
-      >
-        <>
-          {loading ? (
-            <ActivityIndicator color="#8B8000" size={56} />
-          ) : (
-            <Icon color="#8B8000" source="clipboard-edit-outline" size={56} />
-          )}
-          <Text style={{ color: "#8B8000" }}>Edit Game</Text>
-        </>
-      </TouchableRipple>
-    </View>
+            {data?.sets[`set_${data.details.playing_set}`].scoresheet.length >
+              0 && (
+              <TouchableRipple
+                style={{
+                  height: 200,
+                  gap: 3,
+                  width: "15%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#F7BEC0",
+                  elevation: loading ? 0 : 4,
+                  borderRadius: 16,
+                }}
+                disabled={loading}
+                onPress={handleResetSet}
+              >
+                <>
+                  {loading ? (
+                    <ActivityIndicator size={56} />
+                  ) : (
+                    <Icon color="red" source="restore-alert" size={56} />
+                  )}
+                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                    Reset Set
+                  </Text>
+                </>
+              </TouchableRipple>
+            )}
+            {!data?.sets[`set_${data.details.playing_set}`].winner && (
+              <TouchableRipple
+                style={{
+                  height: 200,
+                  gap: 3,
+                  width: "15%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "#FFFAA0",
+                  elevation: loading ? 0 : 4,
+                  borderRadius: 16,
+                }}
+                disabled={loading}
+                onPress={switchSide}
+              >
+                <>
+                  {loading ? (
+                    <ActivityIndicator size={56} />
+                  ) : (
+                    <Icon source="star" size={56} />
+                  )}
+                  <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+                    Force Win Set
+                  </Text>
+                </>
+              </TouchableRipple>
+            )}
+          </>
+        )}
+      </View>
+    </>
   )
 }
 
