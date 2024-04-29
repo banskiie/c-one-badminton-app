@@ -39,8 +39,11 @@ type Set = {
 type Round = {
   current_a_score: number
   current_b_score: number
-  scorer: string
-  team_scored: string
+  scorer?: string
+  team_scored?: string
+  scored_at?: string
+  to_serve: string
+  next_serve: string
 }
 
 // Times
@@ -80,6 +83,7 @@ type Officials = {
 type Statuses = {
   current: "upcoming" | "current" | "forfeit" | "no match" | "finished"
   active: boolean
+  focus?: any
 }
 
 export type Game = {
@@ -113,7 +117,17 @@ export const InitialGameState: Game = {
       current_round: 1,
       last_team_scored: "",
       winner: "",
-      scoresheet: [],
+      scoresheet: [
+        {
+          team_scored: "",
+          scored_at: "",
+          current_a_score: 0,
+          current_b_score: 0,
+          scorer: "",
+          to_serve: "",
+          next_serve: "",
+        },
+      ],
       switch: false,
     },
   },
@@ -162,6 +176,7 @@ export const InitialGameState: Game = {
   statuses: {
     current: "upcoming",
     active: false,
+    focus: Date.now(),
   },
 }
 

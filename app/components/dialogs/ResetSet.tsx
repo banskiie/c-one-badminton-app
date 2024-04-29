@@ -35,10 +35,25 @@ export default ({ open, onClose, id }: DialogProps) => {
             b_score: 0,
             current_round: 1,
             last_team_scored: "",
-            scoresheet: [],
+            scoresheet: [
+              {
+                team_scored: "",
+                scored_at: "",
+                current_a_score: 0,
+                current_b_score: 0,
+                scorer: "",
+                to_serve: "",
+                next_serve: "",
+              },
+            ],
+            switch: false,
             shuttles_used: 0,
             winner: "",
           },
+        },
+        statuses: {
+          ...data.statuses,
+          focus: Date.now(),
         },
       })
       onClose()

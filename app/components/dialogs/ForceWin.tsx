@@ -53,6 +53,10 @@ export default ({ open, onClose, id }: DialogProps) => {
                 winner: team,
               },
             },
+            statuses: {
+              ...data.statuses,
+              focus: Date.now(),
+            },
           })
           break
         case "b":
@@ -63,6 +67,10 @@ export default ({ open, onClose, id }: DialogProps) => {
                 ...data.sets[current],
                 winner: team,
               },
+            },
+            statuses: {
+              ...data.statuses,
+              focus: Date.now(),
             },
           })
           break

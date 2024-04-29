@@ -1,17 +1,7 @@
-import { StyleSheet, View } from "react-native"
+import { StyleSheet } from "react-native"
 import { useEffect, useState } from "react"
 import { Button, Dialog, Text } from "react-native-paper"
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  query,
-  runTransaction,
-  updateDoc,
-  where,
-} from "firebase/firestore"
+import { doc, getDoc, onSnapshot, runTransaction } from "firebase/firestore"
 import { FIRESTORE_DB } from "../../../firebase"
 import moment from "moment"
 
@@ -50,6 +40,7 @@ export default ({ open, onClose, id }: DialogProps) => {
               ...data.statuses,
               active: true,
               current: "current",
+              focus: Date.now(),
             },
             time: {
               ...data.time,
