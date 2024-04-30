@@ -238,6 +238,27 @@ const AddGame = ({ route, navigation }: any) => {
             plus_two_score: Number.isNaN(value) ? 0 : value + 9,
           },
         })
+      } else if (attribute === "plus_two_rule") {
+        if (!value) {
+          dispatch({
+            type: "SET_FIELD",
+            field: object,
+            value: {
+              ...payload[object],
+              [attribute]: value,
+              plus_two_score: details.max_score + 9
+            },
+          })
+        } else {
+          dispatch({
+            type: "SET_FIELD",
+            field: object,
+            value: {
+              ...payload[object],
+              [attribute]: value
+            },
+          })
+        }
       } else {
         dispatch({
           type: "SET_FIELD",
@@ -396,36 +417,54 @@ const AddGame = ({ route, navigation }: any) => {
         </View>
         {/* Plus Two Rule */}
         {details.plus_two_rule && (
-          <View>
-            <Text style={styles.label}>Max Score</Text>
-            <TextInput
-              mode="outlined"
-              keyboardType="number-pad"
-              value={
-                details.plus_two_score == 0
-                  ? ""
-                  : details.plus_two_score.toString()
-              }
-              onChangeText={(value) => {
-                handleFieldChange("details.plus_two_score", +value)
-              }}
-              error={!!errors?.plus_two_score}
-            />
-            {!!errors?.plus_two_score && (
-              <HelperText type="error" visible={!!errors?.plus_two_score}>
-                {errors?.plus_two_score}
-              </HelperText>
-            )}
-          </View>
+          <>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}
+            >
+              <Checkbox
+                status={details.plus_two_score == 9999 ? "checked" : "unchecked"}
+                onPress={() => {
+                  handleFieldChange("details.plus_two_score", details.plus_two_score == 9999 ? details.max_score + 9 : 9999)
+                }}
+              />
+              <Text variant="bodyLarge">Until Team Get +2</Text>
+            </View>
+            {
+              details.plus_two_score !== 9999 &&
+              <View>
+                <Text style={styles.label}>Max Score</Text>
+                <TextInput
+                  mode="outlined"
+                  keyboardType="number-pad"
+                  value={
+                    details.plus_two_score == 0
+                      ? ""
+                      : details.plus_two_score.toString()
+                  }
+                  onChangeText={(value) => {
+                    handleFieldChange("details.plus_two_score", +value)
+                  }}
+                  error={!!errors?.plus_two_score}
+                />
+                {!!errors?.plus_two_score && (
+                  <HelperText type="error" visible={!!errors?.plus_two_score}>
+                    {errors?.plus_two_score}
+                  </HelperText>
+                )}
+              </View>
+            }
+          </>
         )}
         <View>
           {details.max_score > 0 && (
             <HelperText type="info" visible>
               *PLUS TWO: If the score is {details.max_score - 1}-
               {details.max_score - 1}, a side must win by two clear points to
-              win the game. If it reaches {details.plus_two_score - 1}-
-              {details.plus_two_score - 1}, the first to get their{" "}
-              {details.plus_two_score} points wins.
+              win the game.
+              {
+                details.plus_two_score !== 9999 && `If it reaches ${details.plus_two_score - 1}-${details.plus_two_score - 1}, the first to get their ${details.plus_two_score} points wins.`
+              }
+
             </HelperText>
           )}
         </View>
