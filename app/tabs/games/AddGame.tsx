@@ -246,7 +246,7 @@ const AddGame = ({ route, navigation }: any) => {
             value: {
               ...payload[object],
               [attribute]: value,
-              plus_two_score: details.max_score + 9
+              plus_two_score: details.max_score + 9,
             },
           })
         } else {
@@ -255,7 +255,7 @@ const AddGame = ({ route, navigation }: any) => {
             field: object,
             value: {
               ...payload[object],
-              [attribute]: value
+              [attribute]: value,
             },
           })
         }
@@ -419,18 +419,28 @@ const AddGame = ({ route, navigation }: any) => {
         {details.plus_two_rule && (
           <>
             <View
-              style={{ flexDirection: "row", alignItems: "center", marginTop: 12 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginTop: 12,
+              }}
             >
               <Checkbox
-                status={details.plus_two_score == 9999 ? "checked" : "unchecked"}
+                status={
+                  details.plus_two_score == 9999 ? "checked" : "unchecked"
+                }
                 onPress={() => {
-                  handleFieldChange("details.plus_two_score", details.plus_two_score == 9999 ? details.max_score + 9 : 9999)
+                  handleFieldChange(
+                    "details.plus_two_score",
+                    details.plus_two_score == 9999
+                      ? details.max_score + 9
+                      : 9999
+                  )
                 }}
               />
-              <Text variant="bodyLarge">Until Team Get +2</Text>
+              <Text variant="bodyLarge">No Limit</Text>
             </View>
-            {
-              details.plus_two_score !== 9999 &&
+            {details.plus_two_score !== 9999 && (
               <View>
                 <Text style={styles.label}>Max Score</Text>
                 <TextInput
@@ -452,7 +462,7 @@ const AddGame = ({ route, navigation }: any) => {
                   </HelperText>
                 )}
               </View>
-            }
+            )}
           </>
         )}
         <View>
@@ -461,10 +471,12 @@ const AddGame = ({ route, navigation }: any) => {
               *PLUS TWO: If the score is {details.max_score - 1}-
               {details.max_score - 1}, a side must win by two clear points to
               win the game.
-              {
-                details.plus_two_score !== 9999 && `If it reaches ${details.plus_two_score - 1}-${details.plus_two_score - 1}, the first to get their ${details.plus_two_score} points wins.`
-              }
-
+              {details.plus_two_score !== 9999 &&
+                `If it reaches ${details.plus_two_score - 1}-${
+                  details.plus_two_score - 1
+                }, the first to get their ${
+                  details.plus_two_score
+                } points wins.`}
             </HelperText>
           )}
         </View>
