@@ -896,7 +896,12 @@ const Score = ({ route, navigation }) => {
                 <View
                   style={{
                     width: "50%",
-                    flexDirection: "row",
+                    flexDirection:
+                      !!(data?.sets[`set_${data.details.playing_set}`]
+                        ?.scoresheet[
+                        data?.sets[`set_${data.details.playing_set}`]
+                          .current_round - 1
+                      ]?.current_a_score % 2 == 0) ? "row" : "row-reverse",
                     justifyContent: "space-evenly",
                     alignItems: "flex-end",
                     paddingTop: 8,
@@ -912,38 +917,39 @@ const Score = ({ route, navigation }) => {
                       width: hasPlayer2 ? "49%" : "98%",
                       borderTopLeftRadius: 16,
                       borderTopEndRadius: 16,
-                      height: loading ||
-                        data.sets[`set_${data.details.playing_set}`].winner !==
-                        "" ||
-                        !!(
-                          (data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.to_serve != "a1" &&
-                            data?.sets[`set_${data.details.playing_set}`]
+                      height:
+                        loading ||
+                          data.sets[`set_${data.details.playing_set}`].winner !==
+                          "" ||
+                          !!(
+                            (data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.team_scored == "a") ||
-                          (data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.next_serve != "a1" &&
-                            data?.sets[`set_${data.details.playing_set}`]
+                            ]?.to_serve != "a1" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "a") ||
+                            (data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.team_scored == "b" &&
-                            data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
+                            ]?.next_serve != "a1" &&
                               data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "")
-                        )
-                        ? "60%"
-                        : "100%",
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "b" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.next_serve != "")
+                          )
+                          ? "60%"
+                          : "100%",
                       backgroundColor:
                         loading ||
                           data.sets[`set_${data.details.playing_set}`].winner !==
@@ -1014,6 +1020,16 @@ const Score = ({ route, navigation }) => {
                     onPress={() => score("a1")}
                   >
                     <>
+                      <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
+                        {
+                          data?.sets[`set_${data.details.playing_set}`].a_score <= 0 ? null :
+                            !!(data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.current_a_score % 2 == 0) ? "L" : "R"
+                        }
+                      </Text>
                       <View
                         style={{
                           flexDirection: "row",
@@ -1022,8 +1038,9 @@ const Score = ({ route, navigation }) => {
                           gap: 5,
                         }}
                       >
-                        {!loading && !data?.sets[`set_${data.details.playing_set}`]
-                          ?.winner &&
+                        {!loading &&
+                          !data?.sets[`set_${data.details.playing_set}`]
+                            ?.winner &&
                           data?.sets[`set_${data.details.playing_set}`]
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
@@ -1053,19 +1070,33 @@ const Score = ({ route, navigation }) => {
                           ]?.next_serve == "a1")
                       ) && (
                           <Text>
-                            {data?.sets[`set_${data.details.playing_set}`]
+                            {!!(data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.to_serve == "a1"
-                              ? "To Serve"
+                            ]?.to_serve == "a1" && data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 2
+                            ]?.to_serve)
+                              ? "Continue Serving"
                               : data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.next_serve == "a1"
-                                ? "Next To Serve"
-                                : ""}
+                              ]?.to_serve == "a1"
+                                ? "To Serve"
+                                : data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.next_serve == "a1"
+                                  ? "Service Over"
+                                  : ""}
                           </Text>
                         )}
                     </>
@@ -1078,38 +1109,39 @@ const Score = ({ route, navigation }) => {
                         width: "49%",
                         borderTopLeftRadius: 16,
                         borderTopEndRadius: 16,
-                        height: loading ||
-                          data.sets[`set_${data.details.playing_set}`].winner !==
-                          "" ||
-                          !!(
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve != "a2" &&
-                              data?.sets[`set_${data.details.playing_set}`]
+                        height:
+                          loading ||
+                            data.sets[`set_${data.details.playing_set}`]
+                              .winner !== "" ||
+                            !!(
+                              (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.team_scored == "a") ||
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "a2" &&
-                              data?.sets[`set_${data.details.playing_set}`]
+                              ]?.to_serve != "a2" &&
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.team_scored == "a") ||
+                              (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.team_scored == "b" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
+                              ]?.next_serve != "a2" &&
                                 data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.next_serve != "")
-                          )
-                          ? "60%"
-                          : "100%",
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.team_scored == "b" &&
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.next_serve != "")
+                            )
+                            ? "60%"
+                            : "100%",
                         backgroundColor:
                           loading ||
                             data.sets[`set_${data.details.playing_set}`]
@@ -1180,6 +1212,16 @@ const Score = ({ route, navigation }) => {
                       onPress={() => score("a2")}
                     >
                       <>
+                        <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
+                          {
+                            data?.sets[`set_${data.details.playing_set}`].a_score <= 0 ? null :
+                              !!(data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.current_a_score % 2 == 0) ? "R" : "L"
+                          }
+                        </Text>
                         <View
                           style={{
                             flexDirection: "row",
@@ -1188,8 +1230,9 @@ const Score = ({ route, navigation }) => {
                             gap: 5,
                           }}
                         >
-                          {!loading && !data?.sets[`set_${data.details.playing_set}`]
-                            ?.winner &&
+                          {!loading &&
+                            !data?.sets[`set_${data.details.playing_set}`]
+                              ?.winner &&
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
@@ -1219,7 +1262,19 @@ const Score = ({ route, navigation }) => {
                             ]?.next_serve == "a2")
                         ) && (
                             <Text>
-                              {data?.sets[`set_${data.details.playing_set}`]
+                              {!!(data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.to_serve == "a2" && data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 2
+                              ]?.to_serve) ? "Continue Serving" : data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
@@ -1230,7 +1285,7 @@ const Score = ({ route, navigation }) => {
                                   data?.sets[`set_${data.details.playing_set}`]
                                     .current_round - 1
                                 ]?.next_serve == "a2"
-                                  ? "Next To Serve"
+                                  ? "Service Over"
                                   : ""}
                             </Text>
                           )}
@@ -1241,7 +1296,12 @@ const Score = ({ route, navigation }) => {
                 <View
                   style={{
                     width: "50%",
-                    flexDirection: "row",
+                    flexDirection:
+                      !!(data?.sets[`set_${data.details.playing_set}`]
+                        ?.scoresheet[
+                        data?.sets[`set_${data.details.playing_set}`]
+                          .current_round - 1
+                      ]?.current_b_score % 2 == 0) ? "row" : "row-reverse",
                     justifyContent: "space-evenly",
                     alignItems: "flex-end",
                     paddingTop: 8,
@@ -1258,38 +1318,39 @@ const Score = ({ route, navigation }) => {
                       width: hasPlayer2 ? "49%" : "98%",
                       borderTopLeftRadius: 16,
                       borderTopEndRadius: 16,
-                      height: loading ||
-                        data.sets[`set_${data.details.playing_set}`].winner !==
-                        "" ||
-                        !!(
-                          (data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.to_serve != "b1" &&
-                            data?.sets[`set_${data.details.playing_set}`]
+                      height:
+                        loading ||
+                          data.sets[`set_${data.details.playing_set}`].winner !==
+                          "" ||
+                          !!(
+                            (data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.team_scored == "b") ||
-                          (data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.next_serve != "b1" &&
-                            data?.sets[`set_${data.details.playing_set}`]
+                            ]?.to_serve != "b1" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "b") ||
+                            (data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.team_scored == "a" &&
-                            data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
+                            ]?.next_serve != "b1" &&
                               data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "")
-                        )
-                        ? "60%"
-                        : "100%",
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "a" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.next_serve != "")
+                          )
+                          ? "60%"
+                          : "100%",
                       backgroundColor:
                         loading ||
                           data.sets[`set_${data.details.playing_set}`].winner !==
@@ -1360,6 +1421,16 @@ const Score = ({ route, navigation }) => {
                     onPress={() => score("b1")}
                   >
                     <>
+                      <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
+                        {
+                          data?.sets[`set_${data.details.playing_set}`].b_score <= 0 ? null :
+                            !!(data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.current_b_score % 2 == 0) ? "L" : "R"
+                        }
+                      </Text>
                       <View
                         style={{
                           flexDirection: "row",
@@ -1368,8 +1439,9 @@ const Score = ({ route, navigation }) => {
                           gap: 5,
                         }}
                       >
-                        {!loading && !data?.sets[`set_${data.details.playing_set}`]
-                          ?.winner &&
+                        {!loading &&
+                          !data?.sets[`set_${data.details.playing_set}`]
+                            ?.winner &&
                           data?.sets[`set_${data.details.playing_set}`]
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
@@ -1399,19 +1471,35 @@ const Score = ({ route, navigation }) => {
                           ]?.next_serve == "b1")
                       ) && (
                           <Text>
-                            {data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve == "b1"
-                              ? "To Serve"
-                              : data?.sets[`set_${data.details.playing_set}`]
+                            <Text>
+                              {!!(data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.next_serve == "b1"
-                                ? "Next To Serve"
-                                : ""}
+                              ]?.to_serve == "b1" && data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 2
+                              ]?.to_serve)
+                                ? "Continue Serving"
+                                : data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.to_serve == "b1"
+                                  ? "To Serve"
+                                  : data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.next_serve == "b1"
+                                    ? "Service Over"
+                                    : ""}
+                            </Text>
                           </Text>
                         )}
                     </>
@@ -1424,38 +1512,39 @@ const Score = ({ route, navigation }) => {
                         width: "49%",
                         borderTopLeftRadius: 16,
                         borderTopEndRadius: 16,
-                        height: loading ||
-                          data.sets[`set_${data.details.playing_set}`]
-                            .winner !== "" ||
-                          !!(
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve != "b2" &&
-                              data?.sets[`set_${data.details.playing_set}`]
+                        height:
+                          loading ||
+                            data.sets[`set_${data.details.playing_set}`]
+                              .winner !== "" ||
+                            !!(
+                              (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.team_scored == "b") ||
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "b2" &&
-                              data?.sets[`set_${data.details.playing_set}`]
+                              ]?.to_serve != "b2" &&
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.team_scored == "b") ||
+                              (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.team_scored == "a" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
+                              ]?.next_serve != "b2" &&
                                 data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.next_serve != "")
-                          )
-                          ? "60%"
-                          : "100%",
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.team_scored == "a" &&
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.next_serve != "")
+                            )
+                            ? "60%"
+                            : "100%",
                         backgroundColor:
                           loading ||
                             data.sets[`set_${data.details.playing_set}`]
@@ -1526,6 +1615,16 @@ const Score = ({ route, navigation }) => {
                       onPress={() => score("b2")}
                     >
                       <>
+                        <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
+                          {
+                            data?.sets[`set_${data.details.playing_set}`].b_score <= 0 ? null :
+                              !!(data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.current_b_score % 2 == 0) ? "R" : "L"
+                          }
+                        </Text>
                         <View
                           style={{
                             flexDirection: "row",
@@ -1534,8 +1633,9 @@ const Score = ({ route, navigation }) => {
                             gap: 5,
                           }}
                         >
-                          {!loading && !data?.sets[`set_${data.details.playing_set}`]
-                            ?.winner &&
+                          {!loading &&
+                            !data?.sets[`set_${data.details.playing_set}`]
+                              ?.winner &&
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
@@ -1565,19 +1665,35 @@ const Score = ({ route, navigation }) => {
                             ]?.next_serve == "b2")
                         ) && (
                             <Text>
-                              {data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.to_serve == "b2"
-                                ? "To Serve"
-                                : data?.sets[`set_${data.details.playing_set}`]
+                              <Text>
+                                {!!(data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
                                     .current_round - 1
-                                ]?.next_serve == "b2"
-                                  ? "Next To Serve"
-                                  : ""}
+                                ]?.to_serve == "b2" && data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 2
+                                ]?.to_serve)
+                                  ? "Continue Serving"
+                                  : data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.to_serve == "b2"
+                                    ? "To Serve"
+                                    : data?.sets[`set_${data.details.playing_set}`]
+                                      ?.scoresheet[
+                                      data?.sets[`set_${data.details.playing_set}`]
+                                        .current_round - 1
+                                    ]?.next_serve == "b2"
+                                      ? "Service Over"
+                                      : ""}
+                              </Text>
                             </Text>
                           )}
                       </>
@@ -2499,9 +2615,16 @@ const Scoresheet = ({ route }) => {
                       position: "absolute",
                       left: "47%",
                       width: "6%",
-                      backgroundColor: "#E6E6E6"
-                    }}>
-                    <Text style={{ textAlign: "center", fontSize: 28, fontWeight: "bold" }}>
+                      backgroundColor: "#E6E6E6",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        textAlign: "center",
+                        fontSize: 28,
+                        fontWeight: "bold",
+                      }}
+                    >
                       {scoresheet.length - index - 1}
                     </Text>
                     <Text style={{ textAlign: "center" }}>
@@ -2523,7 +2646,8 @@ const Scoresheet = ({ route }) => {
                           ),
                           "seconds"
                         ) % 60
-                      ).padStart(2, "0")}s
+                      ).padStart(2, "0")}
+                      s
                     </Text>
                   </View>
                   <View
@@ -2679,11 +2803,9 @@ const Scoresheet = ({ route }) => {
             width: hasPlayer2 ? "24%" : "48%",
             borderTopLeftRadius: 16,
             borderTopEndRadius: 16,
-            backgroundColor:
-              "#fce5cd",
+            backgroundColor: "#fce5cd",
             elevation: 4,
           }}
-
         >
           <Text style={{ fontSize: 20, fontWeight: "bold" }}>
             {data?.players.team_a.player_1.use_nickname
@@ -2699,18 +2821,17 @@ const Scoresheet = ({ route }) => {
               width: hasPlayer2 ? "24%" : "48%",
               borderTopLeftRadius: 16,
               borderTopEndRadius: 16,
-              backgroundColor:
-                "#fce5cd",
+              backgroundColor: "#fce5cd",
               elevation: 4,
             }}
-
           >
             <Text style={{ fontSize: 20, fontWeight: "bold" }}>
               {data?.players.team_a.player_2.use_nickname
                 ? data?.players.team_a.player_2.nickname
                 : `${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
             </Text>
-          </TouchableRipple>)}
+          </TouchableRipple>
+        )}
         <TouchableRipple
           style={{
             alignItems: "center",
@@ -2718,8 +2839,7 @@ const Scoresheet = ({ route }) => {
             width: hasPlayer2 ? "24%" : "48%",
             borderTopLeftRadius: 16,
             borderTopEndRadius: 16,
-            backgroundColor:
-              "#E8F4EA",
+            backgroundColor: "#E8F4EA",
             elevation: 4,
           }}
           disabled
@@ -2738,8 +2858,7 @@ const Scoresheet = ({ route }) => {
               width: hasPlayer2 ? "24%" : "48%",
               borderTopLeftRadius: 16,
               borderTopEndRadius: 16,
-              backgroundColor:
-                "#E8F4EA",
+              backgroundColor: "#E8F4EA",
               elevation: 4,
             }}
             disabled
@@ -2749,7 +2868,8 @@ const Scoresheet = ({ route }) => {
                 ? data?.players.team_b.player_2.nickname
                 : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
             </Text>
-          </TouchableRipple>)}
+          </TouchableRipple>
+        )}
       </View>
     </View>
   )
