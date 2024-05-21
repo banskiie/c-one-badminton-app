@@ -773,51 +773,92 @@ const Score = ({ route, navigation }) => {
             }}
           >
             {data?.time.start ? (
-              <View
-                style={{
-                  position: "absolute",
-                  zIndex: 50,
-                  top: 0,
-                  backgroundColor: "white",
-                  alignItems: "center",
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  paddingHorizontal: 2,
-                  paddingVertical: 4,
-                  borderBottomLeftRadius: 16,
-                  borderBottomEndRadius: 16,
-                  elevation: loading ? 0 : 4,
-                }}
-              >
-                <IconButton
-                  icon="flag-checkered"
-                  iconColor="green"
-                  disabled={
-                    !(
-                      (data?.details.no_of_sets === 1 &&
-                        data.sets[`set_${data.details.playing_set}`].winner) ||
-                      (data?.details.no_of_sets === 3 &&
-                        (Object.values(data.sets).filter(
-                          (set: any) => set.winner == "a"
-                        ).length == 2 ||
-                          Object.values(data.sets).filter(
-                            (set: any) => set.winner == "b"
-                          ).length == 2))
-                    )
-                  }
-                  onPress={finish}
-                />
-                <Timer start={data?.time.start} />
-                <IconButton
-                  icon="undo-variant"
-                  iconColor="red"
-                  disabled={
-                    data?.sets[`set_${data.details.playing_set}`].scoresheet
-                      .length <= 1
-                  }
-                  onPress={undo}
-                />
-              </View>
+              <>
+
+                <View
+                  style={{
+                    position: "absolute",
+                    zIndex: 50,
+                    top: 0,
+                    backgroundColor: "white",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: 8,
+                    borderBottomLeftRadius: 16,
+                    borderBottomEndRadius: 16,
+                    elevation: loading ? 0 : 4,
+                  }}
+                >
+                  <View
+                    style={{
+                      alignItems: "center",
+                      flexDirection: "row",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <IconButton
+                      icon="flag-checkered"
+                      iconColor="green"
+                      disabled={
+                        !(
+                          (data?.details.no_of_sets === 1 &&
+                            data.sets[`set_${data.details.playing_set}`].winner) ||
+                          (data?.details.no_of_sets === 3 &&
+                            (Object.values(data.sets).filter(
+                              (set: any) => set.winner == "a"
+                            ).length == 2 ||
+                              Object.values(data.sets).filter(
+                                (set: any) => set.winner == "b"
+                              ).length == 2))
+                        )
+                      }
+                      onPress={finish}
+                    />
+                    <Timer start={data?.time.start} />
+                    <IconButton
+                      icon="undo-variant"
+                      iconColor="red"
+                      disabled={
+                        data?.sets[`set_${data.details.playing_set}`].scoresheet
+                          .length <= 1
+                      }
+                      onPress={undo}
+                    />
+                  </View>
+                  {data?.details.no_of_sets > 1 && (
+                    <Dropdown
+                      style={styles.dropdown}
+                      selectedTextStyle={{ textAlign: "center" }}
+                      placeholderStyle={{ textAlign: "center" }}
+                      data={Array.from({
+                        length:
+                          Object.values(data?.sets).filter(
+                            (set: any) => set.winner === "a"
+                          ).length === 2 ||
+                            Object.values(data?.sets).filter(
+                              (set: any) => set.winner === "b"
+                            ).length === 2
+                            ? Object.values(data?.sets).filter(
+                              (set: any) => set.winner
+                            ).length
+                            : Object.values(data?.sets).filter(
+                              (set: any) => set.winner
+                            ).length + 1,
+                      }).map((_, index) => ({
+                        label: `SET ${index + 1}`,
+                        value: index + 1,
+                      }))}
+                      value={!changingSet ? data.details.playing_set : ""}
+                      mode="default"
+                      labelField="label"
+                      valueField="value"
+                      placeholder=""
+                      onChange={(item: any) => changeSet(item.value)}
+                    />
+                  )}
+                </View>
+              </>
+
             ) : (
               <IconButton
                 style={{
@@ -831,6 +872,7 @@ const Score = ({ route, navigation }) => {
                 onPress={handleStartGame}
               />
             )}
+
             <View
               style={{
                 height: "100%",
@@ -879,246 +921,89 @@ const Score = ({ route, navigation }) => {
                 {data.sets[`set_${data.details.playing_set}`].b_score}
               </Text>
             </View>
+
             {data?.time.start && (
-              <View
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  width: "100%",
-                  backgroundColor: "white",
-                  height: 80,
-                  flexDirection: data.sets[`set_${data.details.playing_set}`]
-                    .switch
-                    ? "row-reverse"
-                    : "row",
-                }}
-              >
+              <>
                 <View
                   style={{
-                    width: "50%",
-                    flexDirection:
-                      !!(data?.sets[`set_${data.details.playing_set}`]
-                        ?.scoresheet[
-                        data?.sets[`set_${data.details.playing_set}`]
-                          .current_round - 1
-                      ]?.current_a_score % 2 == 0) ? "row" : "row-reverse",
-                    justifyContent: "space-evenly",
-                    alignItems: "flex-end",
-                    paddingTop: 8,
-                    paddingLeft: 5,
-                    paddingRight: 2.5,
-                    gap: 5,
+                    position: "absolute",
+                    bottom: data?.time.start ? "50%" : 0,
+                    backgroundColor: "white",
+                    flexDirection: data.sets[`set_${data.details.playing_set}`]
+                      .switch
+                      ? "row-reverse"
+                      : "row",
+                    paddingHorizontal: 15,
+                    borderRadius: 16,
+                    gap: 32,
                   }}
                 >
-                  <TouchableRipple
-                    style={{
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: hasPlayer2 ? "49%" : "98%",
-                      borderTopLeftRadius: 16,
-                      borderTopEndRadius: 16,
-                      height:
-                        loading ||
-                          data.sets[`set_${data.details.playing_set}`].winner !==
-                          "" ||
-                          !!(
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve != "a1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "a") ||
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "a1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "b" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.next_serve != "")
-                          )
-                          ? "60%"
-                          : "100%",
-                      backgroundColor:
-                        loading ||
-                          data.sets[`set_${data.details.playing_set}`].winner !==
-                          "" ||
-                          !!(
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve != "a1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "a") ||
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "a1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "b" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.next_serve != "")
-                          )
-                          ? "#d3d3d3"
-                          : "#fce5cd",
-                      elevation: loading ? 0 : 4,
-                    }}
-                    disabled={
-                      loading ||
-                      data.sets[`set_${data.details.playing_set}`].winner !==
-                      "" ||
-                      !!(
-                        (data?.sets[`set_${data.details.playing_set}`]
-                          ?.scoresheet[
-                          data?.sets[`set_${data.details.playing_set}`]
-                            .current_round - 1
-                        ]?.to_serve != "a1" &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.team_scored == "a") ||
-                        (data?.sets[`set_${data.details.playing_set}`]
-                          ?.scoresheet[
-                          data?.sets[`set_${data.details.playing_set}`]
-                            .current_round - 1
-                        ]?.next_serve != "a1" &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.team_scored == "b" &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.next_serve != "")
-                      )
+                  <Text style={{ fontSize: 48, fontWeight: "bold" }}>
+                    {
+                      Object.values(data?.sets).filter(
+                        (set: any) => set.winner === "a"
+                      ).length
                     }
-                    onPress={() => score("a1")}
-                  >
-                    <>
-                      <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
-                        {
-                          data?.sets[`set_${data.details.playing_set}`].a_score <= 0 ? null :
-                            !!(data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.current_a_score % 2 == 0) ? "L" : "R"
-                        }
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          gap: 5,
-                        }}
-                      >
-                        {!loading &&
-                          !data?.sets[`set_${data.details.playing_set}`]
-                            ?.winner &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.to_serve == "a1" && (
-                            <Icon source="badminton" size={20} />
-                          )}
-                        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                          {data?.players.team_a.player_1.use_nickname
-                            ? data?.players.team_a.player_1.nickname
-                            : `${data?.players.team_a.player_1.first_name} ${data?.players.team_a.player_1.last_name}`}
-                        </Text>
-                      </View>
-                      {!!(
-                        !loading &&
-                        !data?.sets[`set_${data.details.playing_set}`]
-                          ?.winner &&
-                        (data?.sets[`set_${data.details.playing_set}`]
-                          ?.scoresheet[
+                  </Text>
+                  <Text style={{ fontSize: 48, fontWeight: "bold" }}>
+                    {
+                      Object.values(data?.sets).filter(
+                        (set: any) => set.winner === "b"
+                      ).length
+                    }
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    width: "100%",
+                    backgroundColor: "white",
+                    height: 80,
+                    flexDirection: data.sets[`set_${data.details.playing_set}`]
+                      .switch
+                      ? "row-reverse"
+                      : "row",
+                  }}
+                >
+                  <View
+                    style={{
+                      width: "50%",
+                      flexDirection: !!(
+                        data?.sets[`set_${data.details.playing_set}`]?.scoresheet[
                           data?.sets[`set_${data.details.playing_set}`]
                             .current_round - 1
-                        ]?.to_serve == "a1" ||
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.next_serve == "a1")
-                      ) && (
-                          <Text>
-                            {!!(data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve == "a1" && data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 2
-                            ]?.to_serve)
-                              ? "Continue Serving"
-                              : data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.to_serve == "a1"
-                                ? "To Serve"
-                                : data?.sets[`set_${data.details.playing_set}`]
-                                  ?.scoresheet[
-                                  data?.sets[`set_${data.details.playing_set}`]
-                                    .current_round - 1
-                                ]?.next_serve == "a1"
-                                  ? "Service Over"
-                                  : ""}
-                          </Text>
-                        )}
-                    </>
-                  </TouchableRipple>
-                  {hasPlayer2 && (
+                        ]?.current_a_score %
+                        2 ==
+                        0
+                      )
+                        ? "row"
+                        : "row-reverse",
+                      justifyContent: "space-evenly",
+                      alignItems: "flex-end",
+                      paddingTop: 8,
+                      paddingLeft: 5,
+                      paddingRight: 2.5,
+                      gap: 5,
+                    }}
+                  >
                     <TouchableRipple
                       style={{
                         alignItems: "center",
                         justifyContent: "center",
-                        width: "49%",
+                        width: hasPlayer2 ? "49%" : "98%",
                         borderTopLeftRadius: 16,
                         borderTopEndRadius: 16,
                         height:
                           loading ||
-                            data.sets[`set_${data.details.playing_set}`]
-                              .winner !== "" ||
+                            data.sets[`set_${data.details.playing_set}`].winner !==
+                            "" ||
                             !!(
                               (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.to_serve != "a2" &&
+                              ]?.to_serve != "a1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1128,7 +1013,7 @@ const Score = ({ route, navigation }) => {
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.next_serve != "a2" &&
+                              ]?.next_serve != "a1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1144,14 +1029,14 @@ const Score = ({ route, navigation }) => {
                             : "100%",
                         backgroundColor:
                           loading ||
-                            data.sets[`set_${data.details.playing_set}`]
-                              .winner !== "" ||
+                            data.sets[`set_${data.details.playing_set}`].winner !==
+                            "" ||
                             !!(
                               (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.to_serve != "a2" &&
+                              ]?.to_serve != "a1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1161,7 +1046,7 @@ const Score = ({ route, navigation }) => {
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.next_serve != "a2" &&
+                              ]?.next_serve != "a1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1186,7 +1071,7 @@ const Score = ({ route, navigation }) => {
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
                               .current_round - 1
-                          ]?.to_serve != "a2" &&
+                          ]?.to_serve != "a1" &&
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
@@ -1196,7 +1081,7 @@ const Score = ({ route, navigation }) => {
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
                               .current_round - 1
-                          ]?.next_serve != "a2" &&
+                          ]?.next_serve != "a1" &&
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
@@ -1209,18 +1094,26 @@ const Score = ({ route, navigation }) => {
                             ]?.next_serve != "")
                         )
                       }
-                      onPress={() => score("a2")}
+                      onPress={() => score("a1")}
                     >
                       <>
-                        <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
-                          {
-                            data?.sets[`set_${data.details.playing_set}`].a_score <= 0 ? null :
-                              !!(data?.sets[`set_${data.details.playing_set}`]
+                        <Text
+                          style={{ position: "absolute", left: 25, fontSize: 20 }}
+                        >
+                          {data?.sets[`set_${data.details.playing_set}`]
+                            .a_score <= 0
+                            ? null
+                            : !!(
+                              data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.current_a_score % 2 == 0) ? "R" : "L"
-                          }
+                              ]?.current_a_score %
+                              2 ==
+                              0
+                            )
+                              ? "L"
+                              : "R"}
                         </Text>
                         <View
                           style={{
@@ -1237,13 +1130,13 @@ const Score = ({ route, navigation }) => {
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.to_serve == "a2" && (
+                            ]?.to_serve == "a1" && (
                               <Icon source="badminton" size={20} />
                             )}
                           <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                            {data?.players.team_a.player_2.use_nickname
-                              ? data?.players.team_a.player_2.nickname
-                              : `${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
+                            {data?.players.team_a.player_1.use_nickname
+                              ? data?.players.team_a.player_1.nickname
+                              : `${data?.players.team_a.player_1.first_name} ${data?.players.team_a.player_1.last_name}`}
                           </Text>
                         </View>
                         {!!(
@@ -1254,274 +1147,298 @@ const Score = ({ route, navigation }) => {
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
                               .current_round - 1
-                          ]?.to_serve == "a2" ||
+                          ]?.to_serve == "a1" ||
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.next_serve == "a2")
+                            ]?.next_serve == "a1")
                         ) && (
                             <Text>
-                              {!!(data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
+                              {!!(
                                 data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.to_serve == "a2" && data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 2
-                              ]?.to_serve) ? "Continue Serving" : data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.to_serve == "a2"
-                                ? "To Serve"
-                                : data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
                                     .current_round - 1
-                                ]?.next_serve == "a2"
-                                  ? "Service Over"
-                                  : ""}
-                            </Text>
-                          )}
-                      </>
-                    </TouchableRipple>
-                  )}
-                </View>
-                <View
-                  style={{
-                    width: "50%",
-                    flexDirection:
-                      !!(data?.sets[`set_${data.details.playing_set}`]
-                        ?.scoresheet[
-                        data?.sets[`set_${data.details.playing_set}`]
-                          .current_round - 1
-                      ]?.current_b_score % 2 == 0) ? "row" : "row-reverse",
-                    justifyContent: "space-evenly",
-                    alignItems: "flex-end",
-                    paddingTop: 8,
-                    paddingRight: 5,
-                    paddingLeft: 2.5,
-                    gap: 5,
-                    elevation: loading ? 0 : 4,
-                  }}
-                >
-                  <TouchableRipple
-                    style={{
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: hasPlayer2 ? "49%" : "98%",
-                      borderTopLeftRadius: 16,
-                      borderTopEndRadius: 16,
-                      height:
-                        loading ||
-                          data.sets[`set_${data.details.playing_set}`].winner !==
-                          "" ||
-                          !!(
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve != "b1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
+                                ]?.to_serve == "a1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "b") ||
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "b1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.to_serve ==
                                 data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "a" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.next_serve != "")
-                          )
-                          ? "60%"
-                          : "100%",
-                      backgroundColor:
-                        loading ||
-                          data.sets[`set_${data.details.playing_set}`].winner !==
-                          "" ||
-                          !!(
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.to_serve != "b1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "b") ||
-                            (data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.next_serve != "b1" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.team_scored == "a" &&
-                              data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.next_serve != "")
-                          )
-                          ? "#d3d3d3"
-                          : "#E8F4EA",
-                      elevation: loading ? 0 : 4,
-                    }}
-                    disabled={
-                      loading ||
-                      data.sets[`set_${data.details.playing_set}`].winner !==
-                      "" ||
-                      !!(
-                        (data?.sets[`set_${data.details.playing_set}`]
-                          ?.scoresheet[
-                          data?.sets[`set_${data.details.playing_set}`]
-                            .current_round - 1
-                        ]?.to_serve != "b1" &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.team_scored == "b") ||
-                        (data?.sets[`set_${data.details.playing_set}`]
-                          ?.scoresheet[
-                          data?.sets[`set_${data.details.playing_set}`]
-                            .current_round - 1
-                        ]?.next_serve != "b1" &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.team_scored == "a" &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.next_serve != "")
-                      )
-                    }
-                    onPress={() => score("b1")}
-                  >
-                    <>
-                      <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
-                        {
-                          data?.sets[`set_${data.details.playing_set}`].b_score <= 0 ? null :
-                            !!(data?.sets[`set_${data.details.playing_set}`]
-                              ?.scoresheet[
-                              data?.sets[`set_${data.details.playing_set}`]
-                                .current_round - 1
-                            ]?.current_b_score % 2 == 0) ? "L" : "R"
-                        }
-                      </Text>
-                      <View
-                        style={{
-                          flexDirection: "row",
-                          justifyContent: "center",
-                          alignItems: "center",
-                          gap: 5,
-                        }}
-                      >
-                        {!loading &&
-                          !data?.sets[`set_${data.details.playing_set}`]
-                            ?.winner &&
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.to_serve == "b1" && (
-                            <Icon source="badminton" size={20} />
-                          )}
-                        <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                          {data?.players.team_b.player_1.use_nickname
-                            ? data?.players.team_b.player_1.nickname
-                            : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
-                        </Text>
-                      </View>
-                      {!!(
-                        !loading &&
-                        !data?.sets[`set_${data.details.playing_set}`]
-                          ?.winner &&
-                        (data?.sets[`set_${data.details.playing_set}`]
-                          ?.scoresheet[
-                          data?.sets[`set_${data.details.playing_set}`]
-                            .current_round - 1
-                        ]?.to_serve == "b1" ||
-                          data?.sets[`set_${data.details.playing_set}`]
-                            ?.scoresheet[
-                            data?.sets[`set_${data.details.playing_set}`]
-                              .current_round - 1
-                          ]?.next_serve == "b1")
-                      ) && (
-                          <Text>
-                            <Text>
-                              {!!(data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.to_serve == "b1" && data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 1
-                              ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
-                                ?.scoresheet[
-                                data?.sets[`set_${data.details.playing_set}`]
-                                  .current_round - 2
-                              ]?.to_serve)
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 2
+                                ]?.to_serve
+                              )
                                 ? "Continue Serving"
                                 : data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
                                     .current_round - 1
-                                ]?.to_serve == "b1"
+                                ]?.to_serve == "a1"
                                   ? "To Serve"
                                   : data?.sets[`set_${data.details.playing_set}`]
                                     ?.scoresheet[
                                     data?.sets[`set_${data.details.playing_set}`]
                                       .current_round - 1
-                                  ]?.next_serve == "b1"
+                                  ]?.next_serve == "a1"
                                     ? "Service Over"
                                     : ""}
                             </Text>
+                          )}
+                      </>
+                    </TouchableRipple>
+                    {hasPlayer2 && (
+                      <TouchableRipple
+                        style={{
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "49%",
+                          borderTopLeftRadius: 16,
+                          borderTopEndRadius: 16,
+                          height:
+                            loading ||
+                              data.sets[`set_${data.details.playing_set}`]
+                                .winner !== "" ||
+                              !!(
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.to_serve != "a2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "a") ||
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.next_serve != "a2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "b" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.next_serve != "")
+                              )
+                              ? "60%"
+                              : "100%",
+                          backgroundColor:
+                            loading ||
+                              data.sets[`set_${data.details.playing_set}`]
+                                .winner !== "" ||
+                              !!(
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.to_serve != "a2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "a") ||
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.next_serve != "a2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "b" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.next_serve != "")
+                              )
+                              ? "#d3d3d3"
+                              : "#fce5cd",
+                          elevation: loading ? 0 : 4,
+                        }}
+                        disabled={
+                          loading ||
+                          data.sets[`set_${data.details.playing_set}`].winner !==
+                          "" ||
+                          !!(
+                            (data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.to_serve != "a2" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "a") ||
+                            (data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.next_serve != "a2" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "b" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.next_serve != "")
+                          )
+                        }
+                        onPress={() => score("a2")}
+                      >
+                        <>
+                          <Text
+                            style={{
+                              position: "absolute",
+                              left: 25,
+                              fontSize: 20,
+                            }}
+                          >
+                            {data?.sets[`set_${data.details.playing_set}`]
+                              .a_score <= 0
+                              ? null
+                              : !!(
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.current_a_score %
+                                2 ==
+                                0
+                              )
+                                ? "R"
+                                : "L"}
                           </Text>
-                        )}
-                    </>
-                  </TouchableRipple>
-                  {hasPlayer2 && (
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              gap: 5,
+                            }}
+                          >
+                            {!loading &&
+                              !data?.sets[`set_${data.details.playing_set}`]
+                                ?.winner &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.to_serve == "a2" && (
+                                <Icon source="badminton" size={20} />
+                              )}
+                            <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                              {data?.players.team_a.player_2.use_nickname
+                                ? data?.players.team_a.player_2.nickname
+                                : `${data?.players.team_a.player_2.first_name} ${data?.players.team_a.player_2.last_name}`}
+                            </Text>
+                          </View>
+                          {!!(
+                            !loading &&
+                            !data?.sets[`set_${data.details.playing_set}`]
+                              ?.winner &&
+                            (data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.to_serve == "a2" ||
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.next_serve == "a2")
+                          ) && (
+                              <Text>
+                                {!!(
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.to_serve == "a2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.to_serve ==
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 2
+                                  ]?.to_serve
+                                )
+                                  ? "Continue Serving"
+                                  : data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.to_serve == "a2"
+                                    ? "To Serve"
+                                    : data?.sets[`set_${data.details.playing_set}`]
+                                      ?.scoresheet[
+                                      data?.sets[`set_${data.details.playing_set}`]
+                                        .current_round - 1
+                                    ]?.next_serve == "a2"
+                                      ? "Service Over"
+                                      : ""}
+                              </Text>
+                            )}
+                        </>
+                      </TouchableRipple>
+                    )}
+                  </View>
+                  <View
+                    style={{
+                      width: "50%",
+                      flexDirection: !!(
+                        data?.sets[`set_${data.details.playing_set}`]?.scoresheet[
+                          data?.sets[`set_${data.details.playing_set}`]
+                            .current_round - 1
+                        ]?.current_b_score %
+                        2 ==
+                        0
+                      )
+                        ? "row"
+                        : "row-reverse",
+                      justifyContent: "space-evenly",
+                      alignItems: "flex-end",
+                      paddingTop: 8,
+                      paddingRight: 5,
+                      paddingLeft: 2.5,
+                      gap: 5,
+                      elevation: loading ? 0 : 4,
+                    }}
+                  >
                     <TouchableRipple
                       style={{
                         alignItems: "center",
                         justifyContent: "center",
-                        width: "49%",
+                        width: hasPlayer2 ? "49%" : "98%",
                         borderTopLeftRadius: 16,
                         borderTopEndRadius: 16,
                         height:
                           loading ||
-                            data.sets[`set_${data.details.playing_set}`]
-                              .winner !== "" ||
+                            data.sets[`set_${data.details.playing_set}`].winner !==
+                            "" ||
                             !!(
                               (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.to_serve != "b2" &&
+                              ]?.to_serve != "b1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1531,7 +1448,7 @@ const Score = ({ route, navigation }) => {
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.next_serve != "b2" &&
+                              ]?.next_serve != "b1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1547,14 +1464,14 @@ const Score = ({ route, navigation }) => {
                             : "100%",
                         backgroundColor:
                           loading ||
-                            data.sets[`set_${data.details.playing_set}`]
-                              .winner !== "" ||
+                            data.sets[`set_${data.details.playing_set}`].winner !==
+                            "" ||
                             !!(
                               (data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.to_serve != "b2" &&
+                              ]?.to_serve != "b1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1564,7 +1481,7 @@ const Score = ({ route, navigation }) => {
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.next_serve != "b2" &&
+                              ]?.next_serve != "b1" &&
                                 data?.sets[`set_${data.details.playing_set}`]
                                   ?.scoresheet[
                                   data?.sets[`set_${data.details.playing_set}`]
@@ -1589,7 +1506,7 @@ const Score = ({ route, navigation }) => {
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
                               .current_round - 1
-                          ]?.to_serve != "b2" &&
+                          ]?.to_serve != "b1" &&
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
@@ -1599,7 +1516,7 @@ const Score = ({ route, navigation }) => {
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
                               .current_round - 1
-                          ]?.next_serve != "b2" &&
+                          ]?.next_serve != "b1" &&
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
@@ -1612,18 +1529,26 @@ const Score = ({ route, navigation }) => {
                             ]?.next_serve != "")
                         )
                       }
-                      onPress={() => score("b2")}
+                      onPress={() => score("b1")}
                     >
                       <>
-                        <Text style={{ position: "absolute", left: 25, fontSize: 20 }}>
-                          {
-                            data?.sets[`set_${data.details.playing_set}`].b_score <= 0 ? null :
-                              !!(data?.sets[`set_${data.details.playing_set}`]
+                        <Text
+                          style={{ position: "absolute", left: 25, fontSize: 20 }}
+                        >
+                          {data?.sets[`set_${data.details.playing_set}`]
+                            .b_score <= 0
+                            ? null
+                            : !!(
+                              data?.sets[`set_${data.details.playing_set}`]
                                 ?.scoresheet[
                                 data?.sets[`set_${data.details.playing_set}`]
                                   .current_round - 1
-                              ]?.current_b_score % 2 == 0) ? "R" : "L"
-                          }
+                              ]?.current_b_score %
+                              2 ==
+                              0
+                            )
+                              ? "L"
+                              : "R"}
                         </Text>
                         <View
                           style={{
@@ -1640,13 +1565,13 @@ const Score = ({ route, navigation }) => {
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.to_serve == "b2" && (
+                            ]?.to_serve == "b1" && (
                               <Icon source="badminton" size={20} />
                             )}
                           <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                            {data?.players.team_b.player_2.use_nickname
-                              ? data?.players.team_b.player_2.nickname
-                              : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
+                            {data?.players.team_b.player_1.use_nickname
+                              ? data?.players.team_b.player_1.nickname
+                              : `${data?.players.team_b.player_1.first_name} ${data?.players.team_b.player_1.last_name}`}
                           </Text>
                         </View>
                         {!!(
@@ -1657,40 +1582,44 @@ const Score = ({ route, navigation }) => {
                             ?.scoresheet[
                             data?.sets[`set_${data.details.playing_set}`]
                               .current_round - 1
-                          ]?.to_serve == "b2" ||
+                          ]?.to_serve == "b1" ||
                             data?.sets[`set_${data.details.playing_set}`]
                               ?.scoresheet[
                               data?.sets[`set_${data.details.playing_set}`]
                                 .current_round - 1
-                            ]?.next_serve == "b2")
+                            ]?.next_serve == "b1")
                         ) && (
                             <Text>
                               <Text>
-                                {!!(data?.sets[`set_${data.details.playing_set}`]
-                                  ?.scoresheet[
+                                {!!(
                                   data?.sets[`set_${data.details.playing_set}`]
-                                    .current_round - 1
-                                ]?.to_serve == "b2" && data?.sets[`set_${data.details.playing_set}`]
-                                  ?.scoresheet[
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.to_serve == "b1" &&
                                   data?.sets[`set_${data.details.playing_set}`]
-                                    .current_round - 1
-                                ]?.to_serve == data?.sets[`set_${data.details.playing_set}`]
-                                  ?.scoresheet[
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.to_serve ==
                                   data?.sets[`set_${data.details.playing_set}`]
-                                    .current_round - 2
-                                ]?.to_serve)
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 2
+                                  ]?.to_serve
+                                )
                                   ? "Continue Serving"
                                   : data?.sets[`set_${data.details.playing_set}`]
                                     ?.scoresheet[
                                     data?.sets[`set_${data.details.playing_set}`]
                                       .current_round - 1
-                                  ]?.to_serve == "b2"
+                                  ]?.to_serve == "b1"
                                     ? "To Serve"
                                     : data?.sets[`set_${data.details.playing_set}`]
                                       ?.scoresheet[
                                       data?.sets[`set_${data.details.playing_set}`]
                                         .current_round - 1
-                                    ]?.next_serve == "b2"
+                                    ]?.next_serve == "b1"
                                       ? "Service Over"
                                       : ""}
                               </Text>
@@ -1698,39 +1627,226 @@ const Score = ({ route, navigation }) => {
                           )}
                       </>
                     </TouchableRipple>
-                  )}
+                    {hasPlayer2 && (
+                      <TouchableRipple
+                        style={{
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "49%",
+                          borderTopLeftRadius: 16,
+                          borderTopEndRadius: 16,
+                          height:
+                            loading ||
+                              data.sets[`set_${data.details.playing_set}`]
+                                .winner !== "" ||
+                              !!(
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.to_serve != "b2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "b") ||
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.next_serve != "b2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "a" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.next_serve != "")
+                              )
+                              ? "60%"
+                              : "100%",
+                          backgroundColor:
+                            loading ||
+                              data.sets[`set_${data.details.playing_set}`]
+                                .winner !== "" ||
+                              !!(
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.to_serve != "b2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "b") ||
+                                (data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.next_serve != "b2" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.team_scored == "a" &&
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    ?.scoresheet[
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      .current_round - 1
+                                  ]?.next_serve != "")
+                              )
+                              ? "#d3d3d3"
+                              : "#E8F4EA",
+                          elevation: loading ? 0 : 4,
+                        }}
+                        disabled={
+                          loading ||
+                          data.sets[`set_${data.details.playing_set}`].winner !==
+                          "" ||
+                          !!(
+                            (data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.to_serve != "b2" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "b") ||
+                            (data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.next_serve != "b2" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.team_scored == "a" &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.next_serve != "")
+                          )
+                        }
+                        onPress={() => score("b2")}
+                      >
+                        <>
+                          <Text
+                            style={{
+                              position: "absolute",
+                              left: 25,
+                              fontSize: 20,
+                            }}
+                          >
+                            {data?.sets[`set_${data.details.playing_set}`]
+                              .b_score <= 0
+                              ? null
+                              : !!(
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  ?.scoresheet[
+                                  data?.sets[`set_${data.details.playing_set}`]
+                                    .current_round - 1
+                                ]?.current_b_score %
+                                2 ==
+                                0
+                              )
+                                ? "R"
+                                : "L"}
+                          </Text>
+                          <View
+                            style={{
+                              flexDirection: "row",
+                              justifyContent: "center",
+                              alignItems: "center",
+                              gap: 5,
+                            }}
+                          >
+                            {!loading &&
+                              !data?.sets[`set_${data.details.playing_set}`]
+                                ?.winner &&
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.to_serve == "b2" && (
+                                <Icon source="badminton" size={20} />
+                              )}
+                            <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+                              {data?.players.team_b.player_2.use_nickname
+                                ? data?.players.team_b.player_2.nickname
+                                : `${data?.players.team_b.player_2.first_name} ${data?.players.team_b.player_2.last_name}`}
+                            </Text>
+                          </View>
+                          {!!(
+                            !loading &&
+                            !data?.sets[`set_${data.details.playing_set}`]
+                              ?.winner &&
+                            (data?.sets[`set_${data.details.playing_set}`]
+                              ?.scoresheet[
+                              data?.sets[`set_${data.details.playing_set}`]
+                                .current_round - 1
+                            ]?.to_serve == "b2" ||
+                              data?.sets[`set_${data.details.playing_set}`]
+                                ?.scoresheet[
+                                data?.sets[`set_${data.details.playing_set}`]
+                                  .current_round - 1
+                              ]?.next_serve == "b2")
+                          ) && (
+                              <Text>
+                                <Text>
+                                  {!!(
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      ?.scoresheet[
+                                      data?.sets[`set_${data.details.playing_set}`]
+                                        .current_round - 1
+                                    ]?.to_serve == "b2" &&
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      ?.scoresheet[
+                                      data?.sets[`set_${data.details.playing_set}`]
+                                        .current_round - 1
+                                    ]?.to_serve ==
+                                    data?.sets[`set_${data.details.playing_set}`]
+                                      ?.scoresheet[
+                                      data?.sets[
+                                        `set_${data.details.playing_set}`
+                                      ].current_round - 2
+                                    ]?.to_serve
+                                  )
+                                    ? "Continue Serving"
+                                    : data?.sets[`set_${data.details.playing_set}`]
+                                      ?.scoresheet[
+                                      data?.sets[
+                                        `set_${data.details.playing_set}`
+                                      ].current_round - 1
+                                    ]?.to_serve == "b2"
+                                      ? "To Serve"
+                                      : data?.sets[`set_${data.details.playing_set}`]
+                                        ?.scoresheet[
+                                        data?.sets[
+                                          `set_${data.details.playing_set}`
+                                        ].current_round - 1
+                                      ]?.next_serve == "b2"
+                                        ? "Service Over"
+                                        : ""}
+                                </Text>
+                              </Text>
+                            )}
+                        </>
+                      </TouchableRipple>
+                    )}
+                  </View>
                 </View>
-              </View>
+              </>
+
             )}
-            <View
-              style={{
-                position: "absolute",
-                top: data?.time.start ? "18%" : 0,
-                backgroundColor: "white",
-                flexDirection: data.sets[`set_${data.details.playing_set}`]
-                  .switch
-                  ? "row-reverse"
-                  : "row",
-                paddingHorizontal: 15,
-                borderRadius: 16,
-                gap: 32,
-              }}
-            >
-              <Text style={{ fontSize: 38, fontWeight: "bold" }}>
-                {
-                  Object.values(data?.sets).filter(
-                    (set: any) => set.winner === "a"
-                  ).length
-                }
-              </Text>
-              <Text style={{ fontSize: 38, fontWeight: "bold" }}>
-                {
-                  Object.values(data?.sets).filter(
-                    (set: any) => set.winner === "b"
-                  ).length
-                }
-              </Text>
-            </View>
+
           </View>
         </>
       )}
@@ -3149,9 +3265,12 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   dropdown: {
-    borderRadius: 12,
+    zIndex: 10,
     width: "100%",
-    backgroundColor: "#E6E6E6",
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 12,
+    backgroundColor: "white",
     paddingHorizontal: 12,
     paddingVertical: 9,
   },
