@@ -30,7 +30,7 @@ const AddGame = ({ route, navigation }: any) => {
   const [categories, setCategories] = useState<any[]>([])
   const [format, setFormat] = useState<any[]>([
     { label: "Best of 1", value: 1 },
-    // { label: "Best of 3", value: 3 },
+    { label: "Best of 3", value: 3 },
   ])
   // Player Count
   const [doubles, setDoubles] = useState<boolean>(false)
@@ -259,6 +259,109 @@ const AddGame = ({ route, navigation }: any) => {
             },
           })
         }
+      } else if (attribute === "no_of_sets") {
+        dispatch({
+          type: "SET_FIELD",
+          field: object,
+          value: {
+            ...payload[object],
+            [attribute]: value,
+          },
+        })
+        switch (value) {
+          case 1:
+            dispatch({
+              type: "SET_FIELD",
+              field: "sets",
+              value: {
+                set_1: {
+                  a_score: 0,
+                  b_score: 0,
+                  current_round: 1,
+                  last_team_scored: "",
+                  winner: "",
+                  scoresheet: [
+                    {
+                      team_scored: "",
+                      scored_at: "",
+                      current_a_score: 0,
+                      current_b_score: 0,
+                      scorer: "",
+                      to_serve: "",
+                      next_serve: "",
+                    },
+                  ],
+                  switch: false,
+                },
+              },
+            })
+            break
+          case 3:
+            dispatch({
+              type: "SET_FIELD",
+              field: "sets",
+              value: {
+                set_1: {
+                  a_score: 0,
+                  b_score: 0,
+                  current_round: 1,
+                  last_team_scored: "",
+                  winner: "",
+                  scoresheet: [
+                    {
+                      team_scored: "",
+                      scored_at: "",
+                      current_a_score: 0,
+                      current_b_score: 0,
+                      scorer: "",
+                      to_serve: "",
+                      next_serve: "",
+                    },
+                  ],
+                  switch: false,
+                },
+                set_2: {
+                  a_score: 0,
+                  b_score: 0,
+                  current_round: 1,
+                  last_team_scored: "",
+                  winner: "",
+                  scoresheet: [
+                    {
+                      team_scored: "",
+                      scored_at: "",
+                      current_a_score: 0,
+                      current_b_score: 0,
+                      scorer: "",
+                      to_serve: "",
+                      next_serve: "",
+                    },
+                  ],
+                  switch: false,
+                },
+                set_3: {
+                  a_score: 0,
+                  b_score: 0,
+                  current_round: 1,
+                  last_team_scored: "",
+                  winner: "",
+                  scoresheet: [
+                    {
+                      team_scored: "",
+                      scored_at: "",
+                      current_a_score: 0,
+                      current_b_score: 0,
+                      scorer: "",
+                      to_serve: "",
+                      next_serve: "",
+                    },
+                  ],
+                  switch: false,
+                },
+              },
+            })
+            break
+        }
       } else {
         dispatch({
           type: "SET_FIELD",
@@ -268,7 +371,6 @@ const AddGame = ({ route, navigation }: any) => {
       }
     } else if (fields.length === 3 || fields.length === 4) {
       const [object, attribute, team_attribute, player_attribute] = fields
-
       if (fields.length === 3) {
         dispatch({
           type: "SET_FIELD",
@@ -472,10 +574,8 @@ const AddGame = ({ route, navigation }: any) => {
               {details.max_score - 1}, a side must win by two clear points to
               win the game.
               {details.plus_two_score !== 9999 &&
-                `If it reaches ${details.plus_two_score - 1}-${
-                  details.plus_two_score - 1
-                }, the first to get their ${
-                  details.plus_two_score
+                `If it reaches ${details.plus_two_score - 1}-${details.plus_two_score - 1
+                }, the first to get their ${details.plus_two_score
                 } points wins.`}
             </HelperText>
           )}
