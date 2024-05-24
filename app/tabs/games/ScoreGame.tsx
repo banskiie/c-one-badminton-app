@@ -147,10 +147,10 @@ const Score = ({ route, navigation }) => {
           if (updatedScoreSheet[data.sets[current].current_round].current_a_score == 1) {
             switch (scorer) {
               case "a1":
-                setASwitch(false)
+                setASwitch(true)
                 break
               case "a2":
-                setASwitch(true)
+                setASwitch(false)
                 break
             }
           } else if (updatedScoreSheet[data.sets[current].current_round].current_a_score > 1 && updatedScoreSheet[data.sets[current].current_round].team_scored != updatedScoreSheet[data.sets[current].current_round - 1].team_scored) {
@@ -187,10 +187,10 @@ const Score = ({ route, navigation }) => {
           if (updatedScoreSheet[data.sets[current].current_round].current_b_score == 1) {
             switch (scorer) {
               case "b1":
-                setBSwitch(false)
+                setBSwitch(true)
                 break
               case "b2":
-                setBSwitch(true)
+                setBSwitch(false)
                 break
             }
           } else if (updatedScoreSheet[data.sets[current].current_round].current_b_score > 1 && updatedScoreSheet[data.sets[current].current_round].team_scored != updatedScoreSheet[data.sets[current].current_round - 1].team_scored) {
@@ -244,24 +244,25 @@ const Score = ({ route, navigation }) => {
       if (updatedScoreSheet[i].current_a_score == 1) {
         switch (updatedScoreSheet[i].scorer) {
           case "a1":
-            setASwitch(false)
+            setASwitch(true)
             break
           case "a2":
-            setASwitch(true)
+            setASwitch(false)
             break
         }
       } else if (updatedScoreSheet[i].current_a_score > 1 && updatedScoreSheet[i + 1].team_scored != updatedScoreSheet[i].team_scored) {
-        setBSwitch(prev => prev)
+        setASwitch(prev => prev)
       } else {
         setASwitch(prev => !prev)
       }
+
       if (updatedScoreSheet[i].current_b_score == 1) {
         switch (updatedScoreSheet[i].scorer) {
-          case "a1":
-            setBSwitch(false)
-            break
-          case "a2":
+          case "b1":
             setBSwitch(true)
+            break
+          case "b2":
+            setBSwitch(false)
             break
         }
       } else if (updatedScoreSheet[i].current_b_score > 1 && updatedScoreSheet[i + 1].team_scored != updatedScoreSheet[i].team_scored) {
