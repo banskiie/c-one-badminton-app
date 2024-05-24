@@ -41,6 +41,8 @@ export default ({ open, onClose, id }: DialogProps) => {
                 scored_at: "",
                 current_a_score: 0,
                 current_b_score: 0,
+                a_switch: true,
+                b_switch: true,
                 scorer: "",
                 to_serve: "",
                 next_serve: "",

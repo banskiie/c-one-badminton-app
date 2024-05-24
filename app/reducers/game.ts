@@ -44,6 +44,8 @@ type Round = {
   scored_at?: string
   to_serve: string
   next_serve: string
+  a_switch: boolean
+  b_switch: boolean
 }
 
 // Times
@@ -121,6 +123,8 @@ export const InitialGameState: Game = {
         {
           team_scored: "",
           scored_at: "",
+          a_switch: true,
+          b_switch: true,
           current_a_score: 0,
           current_b_score: 0,
           scorer: "",

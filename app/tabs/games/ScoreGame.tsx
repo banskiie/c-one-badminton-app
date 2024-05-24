@@ -120,6 +120,48 @@ const Score = ({ route, navigation }) => {
     }
   }
 
+  const checkTeamASwitch = (score: number, scorer: string, scoresheet: any) => {
+    switch (score) {
+      case 0:
+        return true
+      case 1:
+        switch (scorer) {
+          case "a1":
+            return true
+          case "a2":
+            return false
+        }
+        break
+      default:
+        if (scoresheet[scoresheet.length - 1].team_scored != scorer[0]) {
+          return scoresheet[scoresheet.length - 1].a_switch
+        } else {
+          return !scoresheet[scoresheet.length - 1].a_switch
+        }
+    }
+  }
+
+  const checkTeamBSwitch = (score: number, scorer: string, scoresheet: any) => {
+    switch (score) {
+      case 0:
+        return true
+      case 1:
+        switch (scorer) {
+          case "b1":
+            return true
+          case "b2":
+            return false
+        }
+        break
+      default:
+        if (scoresheet[scoresheet.length - 1].team_scored != scorer[0]) {
+          return scoresheet[scoresheet.length - 1].b_switch
+        } else {
+          return !scoresheet[scoresheet.length - 1].b_switch
+        }
+    }
+  }
+
   const score = async (scorer: string) => {
     setLoading(true)
     try {
@@ -127,13 +169,18 @@ const Score = ({ route, navigation }) => {
       const updatedScoreSheet = data.sets[current].scoresheet
       const team = scorer[0]
 
+      const new_a_score = (team == "a" ? 1 : 0) + data?.sets[current].a_score
+      const new_b_score = (team == "b" ? 1 : 0) + data?.sets[current].b_score
+
       updatedScoreSheet[data.sets[current].current_round] = {
         team_scored: team,
         scored_at: Date.now(),
-        current_a_score: (team == "a" ? 1 : 0) + data?.sets[current].a_score,
-        current_b_score: (team == "b" ? 1 : 0) + data?.sets[current].b_score,
+        current_a_score: new_a_score,
+        current_b_score: new_b_score,
         scorer: scorer,
         to_serve: scorer,
+        a_switch: team == "a" ? checkTeamASwitch(new_a_score, scorer, updatedScoreSheet) : data.sets[current].scoresheet[data.sets[current].scoresheet.length - 1].a_switch,
+        b_switch: team == "b" ? checkTeamBSwitch(new_b_score, scorer, updatedScoreSheet) : data.sets[current].scoresheet[data.sets[current].scoresheet.length - 1].b_switch,
         next_serve: next(
           updatedScoreSheet[data.sets[current].current_round - 1].next_serve,
           scorer,
@@ -143,21 +190,6 @@ const Score = ({ route, navigation }) => {
 
       switch (team) {
         case "a":
-          // Check Position of L and R
-          if (updatedScoreSheet[data.sets[current].current_round].current_a_score == 1) {
-            switch (scorer) {
-              case "a1":
-                setASwitch(true)
-                break
-              case "a2":
-                setASwitch(false)
-                break
-            }
-          } else if (updatedScoreSheet[data.sets[current].current_round].current_a_score > 1 && updatedScoreSheet[data.sets[current].current_round].team_scored != updatedScoreSheet[data.sets[current].current_round - 1].team_scored) {
-            setASwitch(prev => prev)
-          } else {
-            setASwitch(prev => !prev)
-          }
           await updateDoc(gameRef, {
             sets: {
               ...data.sets,
@@ -183,21 +215,6 @@ const Score = ({ route, navigation }) => {
           })
           break
         case "b":
-          // Check Position of L and R
-          if (updatedScoreSheet[data.sets[current].current_round].current_b_score == 1) {
-            switch (scorer) {
-              case "b1":
-                setBSwitch(true)
-                break
-              case "b2":
-                setBSwitch(false)
-                break
-            }
-          } else if (updatedScoreSheet[data.sets[current].current_round].current_b_score > 1 && updatedScoreSheet[data.sets[current].current_round].team_scored != updatedScoreSheet[data.sets[current].current_round - 1].team_scored) {
-            setBSwitch(prev => prev)
-          } else {
-            setBSwitch(prev => !prev)
-          }
           await updateDoc(gameRef, {
             sets: {
               ...data.sets,
@@ -230,6 +247,10 @@ const Score = ({ route, navigation }) => {
     }
   }
 
+  useEffect(() => {
+    console.log(data?.sets[`set_${data.details.playing_set}`].scoresheet[data.sets[`set_${data.details.playing_set}`].scoresheet.length - 1].b_switch)
+  }, [data])
+
   const undo = async () => {
     setLoading(true)
     try {
@@ -239,38 +260,6 @@ const Score = ({ route, navigation }) => {
         data?.sets[current].scoresheet[currentRow].team_scored
       // Update Scoresheet
       const updatedScoreSheet = data.sets[current].scoresheet
-      const i = data.sets[current].current_round - 2
-      // Check Position of L and R
-      if (updatedScoreSheet[i].current_a_score == 1) {
-        switch (updatedScoreSheet[i].scorer) {
-          case "a1":
-            setASwitch(true)
-            break
-          case "a2":
-            setASwitch(false)
-            break
-        }
-      } else if (updatedScoreSheet[i].current_a_score > 1 && updatedScoreSheet[i + 1].team_scored != updatedScoreSheet[i].team_scored) {
-        setASwitch(prev => prev)
-      } else {
-        setASwitch(prev => !prev)
-      }
-
-      if (updatedScoreSheet[i].current_b_score == 1) {
-        switch (updatedScoreSheet[i].scorer) {
-          case "b1":
-            setBSwitch(true)
-            break
-          case "b2":
-            setBSwitch(false)
-            break
-        }
-      } else if (updatedScoreSheet[i].current_b_score > 1 && updatedScoreSheet[i + 1].team_scored != updatedScoreSheet[i].team_scored) {
-        setBSwitch(prev => prev)
-      } else {
-        setBSwitch(prev => !prev)
-      }
-
       updatedScoreSheet.pop()
 
       switch (currentTeamScored) {
@@ -380,51 +369,6 @@ const Score = ({ route, navigation }) => {
       setChangingSet(false)
     }
   }
-
-  // const checkSwitch = (data: any, undo?: boolean) => {
-  //   const a_score =
-  //     data?.sets[`set_${data.details.playing_set}`]
-  //       ?.scoresheet[
-  //       data?.sets[`set_${data.details.playing_set}`]
-  //         .current_round
-  //     ]?.current_a_score
-  //   const b_score = data?.sets[`set_${data.details.playing_set}`]
-  //     ?.scoresheet[
-  //     data?.sets[`set_${data.details.playing_set}`]
-  //       .current_round
-  //   ]?.current_b_score
-  //   const scorer = data?.sets[`set_${data.details.playing_set}`]
-  //     ?.scoresheet[
-  //     data?.sets[`set_${data.details.playing_set}`]
-  //       .current_round
-  //   ]?.scorer
-  //   const team_scored = scorer[0]
-
-  //   if (undo) {
-  //     setASwitch(prev => !prev)
-  //     setBSwitch(prev => !prev)
-  //   }
-
-  //   if (a_score == 1) {
-  //     switch (scorer) {
-  //       case "a1":
-  //         break
-  //       case "a2":
-  //         break
-  //     }
-  //   }
-  //   if (b_score == 1) {
-  //     switch (scorer) {
-  //       case "a1":
-  //         break
-  //       case "a2":
-  //         break
-  //     }
-  //   }
-
-
-
-  // }
 
   return (
     <>
@@ -641,7 +585,7 @@ const Score = ({ route, navigation }) => {
                     style={{
                       width: "50%",
                       flexDirection:
-                        aSwitch
+                        data?.sets[`set_${data.details.playing_set}`].scoresheet[data.sets[`set_${data.details.playing_set}`].scoresheet.length - 1].a_switch
                           ? "row"
                           : "row-reverse",
                       justifyContent: "space-evenly",
@@ -772,7 +716,7 @@ const Score = ({ route, navigation }) => {
                           {data?.sets[`set_${data.details.playing_set}`]
                             .a_score <= 0
                             ? null
-                            : aSwitch
+                            : data?.sets[`set_${data.details.playing_set}`].scoresheet[data.sets[`set_${data.details.playing_set}`].scoresheet.length - 1].a_switch
                               ? "L"
                               : "R"}
                         </Text>
@@ -972,7 +916,7 @@ const Score = ({ route, navigation }) => {
                             {data?.sets[`set_${data.details.playing_set}`]
                               .a_score <= 0
                               ? null
-                              : aSwitch
+                              : data?.sets[`set_${data.details.playing_set}`].scoresheet[data.sets[`set_${data.details.playing_set}`].scoresheet.length - 1].a_switch
                                 ? "R"
                                 : "L"}
                           </Text>
@@ -1059,7 +1003,7 @@ const Score = ({ route, navigation }) => {
                   <View
                     style={{
                       width: "50%",
-                      flexDirection: bSwitch
+                      flexDirection: data?.sets[`set_${data.details.playing_set}`].scoresheet[data.sets[`set_${data.details.playing_set}`].scoresheet.length - 1].b_switch
                         ? "row"
                         : "row-reverse",
                       justifyContent: "space-evenly",
@@ -1191,7 +1135,7 @@ const Score = ({ route, navigation }) => {
                           {data?.sets[`set_${data.details.playing_set}`]
                             .b_score <= 0
                             ? null
-                            : bSwitch
+                            : data?.sets[`set_${data.details.playing_set}`].scoresheet[data.sets[`set_${data.details.playing_set}`].scoresheet.length - 1].b_switch
                               ? "L"
                               : "R"}
                         </Text>
@@ -1396,7 +1340,7 @@ const Score = ({ route, navigation }) => {
                             {data?.sets[`set_${data.details.playing_set}`]
                               .b_score <= 0
                               ? null
-                              : bSwitch
+                              : data?.sets[`set_${data.details.playing_set}`].scoresheet[data.sets[`set_${data.details.playing_set}`].scoresheet.length - 1].b_switch
                                 ? "R"
                                 : "L"}
                           </Text>
