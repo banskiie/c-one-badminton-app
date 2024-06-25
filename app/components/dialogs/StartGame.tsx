@@ -1,6 +1,6 @@
-import { StyleSheet } from "react-native"
+import { StyleSheet, View } from "react-native"
 import { useEffect, useState } from "react"
-import { Button, Dialog, Text } from "react-native-paper"
+import { Button, Dialog, Text, Tooltip } from "react-native-paper"
 import { doc, getDoc, onSnapshot, runTransaction } from "firebase/firestore"
 import { FIRESTORE_DB } from "../../../firebase"
 import moment from "moment"
@@ -17,7 +17,8 @@ export default ({ open, onClose, id }: DialogProps) => {
     const sub = onSnapshot(game, {
       next: (snapshot) => {
         if (snapshot.exists()) {
-          setData(snapshot.data())
+          const snap = snapshot.data()
+          setData(snap)
         }
       },
     })
@@ -34,6 +35,7 @@ export default ({ open, onClose, id }: DialogProps) => {
         const currentDoc = await getDoc(currentRef)
         if (currentDoc.exists()) {
           const data = currentDoc.data()
+
           transaction.update(currentRef, {
             ...data,
             statuses: {
@@ -68,18 +70,18 @@ export default ({ open, onClose, id }: DialogProps) => {
     <Dialog visible={open} onDismiss={onClose} dismissable={false}>
       <Dialog.Title>Start Game</Dialog.Title>
       <Dialog.Content>
-        <Text>Are you sure you want to start the game?</Text>
+        <Text>Would you like to start the game?</Text>
       </Dialog.Content>
       <Dialog.Actions>
         <Button loading={loading} onPress={onClose}>
           Close
         </Button>
-        <Button loading={loading} onPress={start} textColor="red">
-          Start
-        </Button>
+        <Tooltip title="Please enter server and receiver!">
+          <Button loading={loading} onPress={start} textColor="red">
+            Start
+          </Button>
+        </Tooltip>
       </Dialog.Actions>
     </Dialog>
   )
 }
-
-const styles = StyleSheet.create({})
